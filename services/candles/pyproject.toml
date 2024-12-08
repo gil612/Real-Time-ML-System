@@ -9,3 +9,6 @@ dependencies = [
     "pydantic-settings>=2.6.1",
     "quixstreams>=3.4.0",
 ]
+
+[tool.poetry.dependencies]
+pydantic-settings = "^2.0.0"
