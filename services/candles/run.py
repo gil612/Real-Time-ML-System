@@ -15,7 +15,7 @@ def custom_ts_extractor(
     Specifying a custom timestamp extractor to use the timestamp from the message payload
     instead of Kafka timestamp.
     """
-    # breakpoint
+    # breakpoint()
     return value['timestamp_ms']
 
 
@@ -73,6 +73,7 @@ def main(
         broker_address=kafka_broker_address,
         consumer_group=kafka_consumer_group,
     )
+    # app.clear_state()
 
     # Define the input and output topic
     input_topic = app.topic(
@@ -84,6 +85,8 @@ def main(
     output_topic = app.topic(name=kafka_output_topic, value_serializer='json')
     # Create a streaming DataFrame from the input topic
     sdf = app.dataframe(topic=input_topic)
+
+    # sdf = sdf.apply(lambda value: logger.info(f'Received trade: {value}'))
 
     # Define tumbling window
     sdf = sdf.tumbling_window(timedelta(seconds=candle_seconds))
@@ -98,6 +101,12 @@ def main(
 
     # Note: you can pipe to emit the final candle only, you could do this example:
     # https://quix.io/docs/quix-streams/windowing.html#updating-window-definitions
+
+    # sdf = (
+    #     sdf.tumbling_window(timedelta(seconds=candle_seconds))
+    #     .reduce(reducer=update_candle, initializer=init_candle)
+    #     .current()
+    # )
 
     # push the candle to the output topic
     sdf = sdf.to_topic(topic=output_topic)
