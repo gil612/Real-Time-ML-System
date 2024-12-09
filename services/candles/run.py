@@ -53,6 +53,7 @@ def main(
     kafka_output_topic: str,
     kafka_consumer_group: str,
     candle_seconds: int,
+    emit_incomplete_candles: bool,
 ):
     """
     1. Ingests trades from Kafka
@@ -65,6 +66,7 @@ def main(
         kafka_output_topic (str): Kafka output topic
         kafka_consumer_group (str): Kafka consumer group
         candle_seconds (int): Candle seconds
+        emit_incomplete_candles (bool): Emit incomplete candles or just the final one
     Returns:
         None
     """
@@ -92,11 +94,16 @@ def main(
 
     # Aggregation of trades into candles using tumbling windows
     sdf = (
-        sdf.tumbling_window(timedelta(seconds=candle_seconds))
-        .reduce(reducer=update_candle, initializer=init_candle)
-        .current()
+        sdf.tumbling_window(timedelta(seconds=candle_seconds)).reduce(
+            reducer=update_candle, initializer=init_candle
+        )
+        # .current()
     )
 
+    if emit_incomplete_candles:
+        sdf = sdf.current()
+    else:
+        sdf = sdf.final()
     # Extract open, high, low, close, volume, timestamp, pair
     sdf['open'] = sdf['value']['open']
     sdf['high'] = sdf['value']['high']
@@ -143,4 +150,5 @@ if __name__ == '__main__':
         kafka_output_topic=config.kafka_output_topic,
         kafka_consumer_group=config.kafka_consumer_group,
         candle_seconds=config.candle_seconds,
+        emit_incomplete_candles=config.emit_incomplete_candles,
     )
