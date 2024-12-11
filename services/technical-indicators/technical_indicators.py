@@ -57,6 +57,6 @@ def compute_indicators(
 
     final_message = {**candle, **indicators}
 
-    breakpoint()
+    # breakpoint()
 
     return final_message
