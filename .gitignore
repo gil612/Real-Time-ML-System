@@ -203,7 +203,7 @@ ca.cert
 **/state
 **/setup_credentials.sh
 *.csv
-**/credentials.env
+**/hopsworks_credentials.env
 .venv/
 certificates/
 *.parquet

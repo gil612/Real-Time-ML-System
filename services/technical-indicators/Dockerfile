@@ -1,10 +1,11 @@
 # Use a Python image with uv pre-installed
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm
 
-# Install TA-Lib dependencies
+# Install build dependencies
 RUN apt-get update && apt-get install -y \
-    wget \
+    gcc \
     build-essential \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
 # Install TA-Lib

@@ -115,7 +115,6 @@ def main(
 
     sdf['window_start_ms'] = sdf['start']
     sdf['window_end_ms'] = sdf['end']
-    # sdf = sdf.print()
 
     sdf = sdf[
         [
@@ -130,6 +129,10 @@ def main(
             'window_end_ms',
         ]
     ]
+
+    sdf['candle_seconds'] = candle_seconds
+
+    # sdf = sdf.print()
 
     sdf = sdf.update(lambda value: logger.info(f'Candle: {value}'))
     # sdf = sdf.update(lambda value : breakpoint())
