@@ -9,7 +9,8 @@ def main(
     kafka_input_topic: str,
     kafka_output_topic: str,
     kafka_consumer_group: str,
-    max_candles_in_state: int,
+    max_candles_in_state: int,  # The number of candles to use for the technical indicators
+    candle_seconds: int,  # The number of seconds to use for the candles
 ):
     """
     3 stages:
@@ -22,6 +23,7 @@ def main(
         kafka_output_topic: The topic to push technical indicators to
         kafka_consumer_group: The consumer group to use
         max_candles_in_state: The number of candles to use for the technical indicators
+        candle_seconds: The number of seconds to use for the candles
     Returns:
         None
     """
@@ -37,6 +39,8 @@ def main(
 
     # Create a streaming DataFrame so we can start transforming data in real time
     sdf = app.dataframe(topic=input_topic)
+
+    sdf = sdf[sdf['candle_seconds'] == candle_seconds]
 
     sdf = sdf.apply(update_candles, stateful=True)
 
@@ -61,4 +65,5 @@ if __name__ == '__main__':
         kafka_output_topic=config.kafka_output_topic,
         kafka_consumer_group=config.kafka_consumer_group,
         max_candles_in_state=config.max_candles_in_state,
+        candle_seconds=config.candle_seconds,
     )
