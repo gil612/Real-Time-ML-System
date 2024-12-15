@@ -115,7 +115,6 @@ def main(
 
     sdf['window_start_ms'] = sdf['start']
     sdf['window_end_ms'] = sdf['end']
-    # sdf = sdf.print()
 
     sdf = sdf[
         [

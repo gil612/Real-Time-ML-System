@@ -13,10 +13,11 @@ def main(
     candle_seconds: int,  # The number of seconds to use for the candles
 ):
     """
-    3 stages:
-    1. Ingests candles form the kafka input topic
+    3 steps:
+    1. Ingests candles from the kafka input topic
     2. Computes technical indicators
     3. Sends the technical indicators to the kafka output topic
+
     Args:
         kafka_broker_address: The address of the kafka broker
         kafka_input_topic: The topic to ingest candles from
@@ -30,14 +31,20 @@ def main(
     logger.info('Hello from technical-indicators!')
 
     app = Application(
-        broker_address=kafka_broker_address, consumer_group=kafka_consumer_group
+        broker_address=kafka_broker_address,
+        consumer_group=kafka_consumer_group,
     )
 
-    input_topic = app.topic(name=kafka_input_topic, value_deserializer='json')
-
-    output_topic = app.topic(name=kafka_output_topic, value_serializer='json')
-
-    # Create a streaming DataFrame so we can start transforming data in real time
+    # Define the input and output topics of our streaming application
+    input_topic = app.topic(
+        name=kafka_input_topic,
+        value_deserializer='json',
+    )
+    output_topic = app.topic(
+        name=kafka_output_topic,
+        value_serializer='json',
+    )
+    # Create a Streaming DataFrame so we can start transforming data in real time
     sdf = app.dataframe(topic=input_topic)
 
     sdf = sdf[sdf['candle_seconds'] == candle_seconds]
@@ -47,12 +54,11 @@ def main(
     # Compute the technical indicators from the candles in the state
     sdf = sdf.apply(compute_indicators, stateful=True)
 
-    sdf = sdf.update(lambda value: logger.info(f'Final message: {value}'))
+    sdf = sdf.update(lambda value: logger.debug(f'Final message: {value}'))
 
-    # push the candle to the output topic
-    sdf = sdf.to_topic(topic=output_topic)
+    # Send the final messages to the output topic
+    sdf = sdf.to_topic(output_topic)
 
-    # Start the application
     app.run()
 
 
