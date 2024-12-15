@@ -210,3 +210,4 @@ certificates/
 *.parquet
 target/
 anthropic.env
+**/hopsworks_credentials.env
