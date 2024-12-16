@@ -41,15 +41,15 @@ services:
       - KAFKA_BROKER_ADDRESS=redpanda:9092
     restart: always
 
-  to-features-store:
+  to-feature-store:
     build:
-      context: ../services/to-features-store
+      context: ../services/to-feature-store
       dockerfile: Dockerfile
     networks:
       - redpanda_network
     env_file:
-      - ../services/to-features-store/settings.env
-      - ../services/to-features-store/hopsworks_credentials.env
+      - ../services/to-feature-store/settings.env
+      - ../services/to-feature-store/hopsworks_credentials.env
     environment:
       - KAFKA_BROKER_ADDRESS=redpanda:9092
     restart: always

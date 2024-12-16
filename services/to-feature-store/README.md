@@ -1,3 +1,4 @@
 ## To feature store
 
-This services read messages from a given Kafka topic and pushesthem to a Feature Store.
+This services reads messages from a given Kafka topic and pushes them to a Feature Store.
+

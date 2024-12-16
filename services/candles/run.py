@@ -2,6 +2,7 @@ from datetime import timedelta
 from typing import Any, List, Optional, Tuple
 
 from loguru import logger
+from quixstreams import Application
 from quixstreams.models import TimestampType
 
 
@@ -15,7 +16,7 @@ def custom_ts_extractor(
     Specifying a custom timestamp extractor to use the timestamp from the message payload
     instead of Kafka timestamp.
     """
-    # breakpoint()
+    # logger.debug(f'Custom timestamp extractor: {value}')
     return value['timestamp_ms']
 
 
@@ -23,6 +24,7 @@ def init_candle(trade: dict) -> dict:
     """
     Initialize a candle with the first trade
     """
+    # breakpoint()
     return {
         'open': trade['price'],
         'high': trade['price'],
@@ -38,6 +40,7 @@ def update_candle(candle: dict, trade: dict) -> dict:
     """
     Update the candle with the latest trade
     """
+    # breakpoint()
     candle['close'] = trade['price']
     candle['high'] = max(candle['high'], trade['price'])
     candle['low'] = min(candle['low'], trade['price'])
@@ -56,8 +59,9 @@ def main(
     emit_incomplete_candles: bool,
 ):
     """
+    3 steps:
     1. Ingests trades from Kafka
-    2. Generates candles using tumbling window and
+    2. Generates candles using tumbling windows and
     3. Outputs candles to Kafka
 
     Args:
@@ -70,41 +74,44 @@ def main(
     Returns:
         None
     """
-    logger.info('Starting candles service!')
+    logger.info('Starting the candles service!')
 
-    from quixstreams import Application
-
-    # Initialize the Quix application
+    # Initialize the Quix Streams application
     app = Application(
         broker_address=kafka_broker_address,
         consumer_group=kafka_consumer_group,
     )
-    # app.clear_state()
 
-    # Define the input and output topic
+    # Define the input and output topics
     input_topic = app.topic(
         name=kafka_input_topic,
         value_deserializer='json',
         timestamp_extractor=custom_ts_extractor,
     )
+    output_topic = app.topic(
+        name=kafka_output_topic,
+        value_serializer='json',
+    )
 
-    output_topic = app.topic(name=kafka_output_topic, value_serializer='json')
-    # Create a streaming DataFrame from the input topic
+    # Create a Streaming DataFrame from the input topic
     sdf = app.dataframe(topic=input_topic)
 
     # Aggregation of trades into candles using tumbling windows
     sdf = (
-        sdf.tumbling_window(timedelta(seconds=candle_seconds)).reduce(
-            reducer=update_candle, initializer=init_candle
-        )
-        # .current()
+        # Define a tumbling window of 10 minutes
+        sdf.tumbling_window(timedelta(seconds=candle_seconds))
+        # Create a "reduce" aggregation with "reducer" and "initializer" functions
+        .reduce(reducer=update_candle, initializer=init_candle)
     )
 
     if emit_incomplete_candles:
+        # Emit all intermediate candles to make the system more responsive
         sdf = sdf.current()
     else:
+        # Emit only the final candle
         sdf = sdf.final()
-    # Extract open, high, low, close, volume, timestamp, pair
+
+    # Extract open, high, low, close, volume, timestamp_ms, pair from the dataframe
     sdf['open'] = sdf['value']['open']
     sdf['high'] = sdf['value']['high']
     sdf['low'] = sdf['value']['low']
@@ -113,9 +120,11 @@ def main(
     sdf['timestamp_ms'] = sdf['value']['timestamp_ms']
     sdf['pair'] = sdf['value']['pair']
 
+    # Extract window start and end timestamps
     sdf['window_start_ms'] = sdf['start']
     sdf['window_end_ms'] = sdf['end']
 
+    # keep only the relevant columns
     sdf = sdf[
         [
             'pair',
@@ -132,8 +141,9 @@ def main(
 
     sdf['candle_seconds'] = candle_seconds
 
+    # sdf = sdf.print()
     sdf = sdf.update(lambda value: logger.info(f'Candle: {value}'))
-    # sdf = sdf.update(lambda value : breakpoint())
+    # sdf = sdf.update(lambda value: breakpoint())
 
     # push the candle to the output topic
     sdf = sdf.to_topic(topic=output_topic)
