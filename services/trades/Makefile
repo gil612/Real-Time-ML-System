@@ -7,7 +7,7 @@ run-dev-historical:
 	uv run python run.py
 
 build:
-	docker build -f multistage.Dockerfile -t trades .
+	docker build -f Dockerfile -t trades .
 
 run: build
 	docker run -it \

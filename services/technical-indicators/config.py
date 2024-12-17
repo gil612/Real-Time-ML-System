@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -9,6 +11,7 @@ class Config(BaseSettings):
     kafka_consumer_group: str
     max_candles_in_state: int
     candle_seconds: int
+    data_source: Literal['live', 'historical', 'test']
 
 
 config = Config()
