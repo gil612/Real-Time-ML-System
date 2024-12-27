@@ -1,6 +1,3 @@
-from datetime import datetime, timezone
-from typing import Optional
-
 import hopsworks
 import pandas as pd
 from quixstreams.sinks.base import BatchingSink, SinkBackpressureError, SinkBatch
@@ -19,16 +16,12 @@ class HopsworksFeatureStoreSink(BatchingSink):
         feature_group_version: int,
         feature_group_primary_keys: list[str],
         feature_group_event_time: str,
-        feature_group_materialization_interval_minutes: Optional[int] = 15,
     ):
         """
         Establish a connection to the Hopsworks Feature Store
         """
         self.feature_group_name = feature_group_name
         self.feature_group_version = feature_group_version
-        self.materialization_interval_minutes = (
-            feature_group_materialization_interval_minutes
-        )
 
         # Establish a connection to the Hopsworks Feature Store
         project = hopsworks.login(project=project_name, api_key_value=api_key)
@@ -41,12 +34,6 @@ class HopsworksFeatureStoreSink(BatchingSink):
             primary_key=feature_group_primary_keys,
             event_time=feature_group_event_time,
             online_enabled=True,
-        )
-
-        # Set the materialization interval
-        self._feature_group.materialization_job.schedule(
-            cron_expression=f'0 0/{self.materialization_interval_minutes} * ? * * *',
-            start_time=datetime.now(tz=timezone.utc),
         )
 
         # call constructor of the base class to make sure the batches are initialized

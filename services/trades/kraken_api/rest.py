@@ -106,7 +106,7 @@ class KrakenRestAPISinglePair(TradesAPI):
         ]
 
         # update the since_timestamp_ns
-        self.since_timestamp_ns = int(float(data['result']['last']))
+        self.since_timestamp_ns = float(data['result']['last'])
 
         # check if we are done
         # TODO: check if this stopping conditions really work
