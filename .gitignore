@@ -209,7 +209,7 @@ ca.cert
 certificates/
 *.parquet
 target/
-anthropic.env
+anthropic_credentials.env
 **/hopsworks_credentials.env
 services/to-feature-store/hopsworks_credentials.env
 services/news/cryptopanic_credentials.env
