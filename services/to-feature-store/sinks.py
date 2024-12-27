@@ -1,9 +1,11 @@
 from datetime import datetime, timezone
-from typing import Optional
 
 import hopsworks
 import pandas as pd
-from quixstreams.sinks.base import BatchingSink, SinkBackpressureError, SinkBatch
+
+# from hopsworks.exceptions import FeatureStoreException
+from loguru import logger
+from quixstreams.sinks.base import BatchingSink, SinkBatch
 
 
 class HopsworksFeatureStoreSink(BatchingSink):
@@ -19,7 +21,7 @@ class HopsworksFeatureStoreSink(BatchingSink):
         feature_group_version: int,
         feature_group_primary_keys: list[str],
         feature_group_event_time: str,
-        feature_group_materialization_interval_minutes: Optional[int] = 15,
+        feature_group_materialization_interval_minutes: int,
     ):
         """
         Establish a connection to the Hopsworks Feature Store
@@ -43,11 +45,15 @@ class HopsworksFeatureStoreSink(BatchingSink):
             online_enabled=True,
         )
 
-        # Set the materialization interval
-        self._feature_group.materialization_job.schedule(
-            cron_expression=f'0 0/{self.materialization_interval_minutes} * ? * * *',
-            start_time=datetime.now(tz=timezone.utc),
-        )
+        # set the materialization interval
+        try:
+            self._feature_group.materialization_job.schedule(
+                cron_expression=f'0 0/{self.materialization_interval_minutes} * ? * * *',
+                start_time=datetime.now(tz=timezone.utc),
+            )
+        # TODO: handle the FeatureStoreException
+        except Exception as e:
+            logger.error(f'Failed to schedule materialization job: {e}')
 
         # call constructor of the base class to make sure the batches are initialized
         super().__init__()
@@ -57,14 +63,17 @@ class HopsworksFeatureStoreSink(BatchingSink):
         data = [item.value for item in batch]
         data = pd.DataFrame(data)
 
-        try:
-            # Try to write data to the db
-            self._feature_group.insert(data)
-        except Exception as err:  # Capture the original exception
-            # In case of timeout, tell the app to wait for 30s
-            # and retry the writing later
-            raise SinkBackpressureError(
-                retry_after=30.0,
-                topic=batch.topic,
-                partition=batch.partition,
-            ) from err  # Chain the exception
+        self._feature_group.insert(data)
+
+        # try:
+        #     # Try to write data to the db
+        #     self._feature_group.insert(data)
+        # except Exception as err:  # Capture the original exception
+        #     # In case of timeout, tell the app to wait for 30s
+        #     # and retry the writing later
+
+        #     raise SinkBackpressureError(
+        #         retry_after=30.0,
+        #         topic=batch.topic,
+        #         partition=batch.partition,
+        #     ) from err  # Chain the exception

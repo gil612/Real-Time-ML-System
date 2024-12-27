@@ -32,6 +32,18 @@ get-random-run-id:
 	$(eval RUN_ID := $(shell echo %RANDOM%-%RANDOM%-%RANDOM%-%RANDOM%))
 	@echo "Generated RUN_ID: $(RUN_ID)"
 
+
+# News signal pipeline management
+build-news-signal-live:
+	docker compose -f news-signal-live.yml build
+
+start-news-signal-live: build-news-signal-live
+	docker compose -f news-signal-live.yml up -d
+
+stop-news-signal-live:
+	docker compose -f news-signal-live.yml down
+
 clean-backfill-kakfa-topics:
 	@echo "Removing all Kafka topics that contain the word historical"
+	docker compose -f redpanda.yml exec redpanda rpk topic delete -r ".*historical.*"
 	
