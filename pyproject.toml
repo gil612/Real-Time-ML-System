@@ -11,7 +11,9 @@ lint.select = [
 lint.ignore = [
     "C901",  # max-complexity-10
     "E501",  # line-too-long
+    "F401"   # unsafe-fixes
 ]
+
 
 [tool.ruff.format]
 indent-style = "space"

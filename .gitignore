@@ -205,6 +205,7 @@ ca.cert
 **/setup_credentials.sh
 *.csv
 **/credentials.env
+**/anthropic_credentials.env
 .venv/
 certificates/
 *.parquet
@@ -213,3 +214,4 @@ anthropic.env
 **/hopsworks_credentials.env
 services/to-feature-store/hopsworks_credentials.env
 services/news/cryptopanic_credentials.env
+services/news-signal/anthropic_credentials.env
