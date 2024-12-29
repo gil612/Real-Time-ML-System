@@ -47,5 +47,11 @@ class NewsSignal(BaseModel):
 
 class BaseNewsSignalExtractor(ABC):
     @abstractmethod
-    def get_signal(self, text: str) -> dict:
+    def get_signal(
+        self, text: str, output_format: Literal['dict', 'NewsSignal'] = 'dict'
+    ) -> dict | NewsSignal:
         pass
+
+    # @property
+    # def model_name(self) -> str:
+    #     return self.model_name

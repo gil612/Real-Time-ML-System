@@ -38,6 +38,8 @@ class ClaudeNewsSignalExtractor:
 
         self.output_format = output_format
 
+        self.model_name = model_name
+
     def get_signal(self, text: str) -> NewsSignal | dict:
         response: NewsSignal = self.llm.structured_predict(
             NewsSignal,
