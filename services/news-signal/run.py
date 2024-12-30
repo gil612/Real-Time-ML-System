@@ -38,7 +38,7 @@ def main(
     sdf = sdf.apply(
         lambda value: {
             'news': value['title'],
-            **llm.get_signal(value['title']),
+            **llm.get_signal(value['title']).to_dict(),
             'model_name': llm.model_name,
         }
     )

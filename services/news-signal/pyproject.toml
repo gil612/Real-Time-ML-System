@@ -1,18 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "news-signal"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
+description = "News signal processing service"
 requires-python = ">=3.12"
 dependencies = [
-    "llama-index-core>=0.12.8",
-    "llama-index-llms-anthropic>=0.6.3",
+    "llama-index-core>=0.9.48",
+    "llama-index-llms-ollama>=0.1.3",
+    "llama-index-llms-anthropic>=0.1.3",
+    "llama-index-embeddings-huggingface>=0.1.3",
     "pydantic-settings>=2.6.1",
     "pydantic>=2.10.4",
     "quixstreams>=3.5.0",
     "loguru>=0.7.3",
-    "llama-index-llms-ollama>=0.5.0",
 ]
 
-[tool.uv.workspace]
-members = ["llama-index-core"]
+[tool.setuptools]
+packages = ["llms"]

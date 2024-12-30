@@ -1,33 +1,20 @@
 from typing import Literal
 
+from loguru import logger
+
 from .base import BaseNewsSignalExtractor
 from .claude import ClaudeNewsSignalExtractor
+from .config import AnthropicConfig, Config, OllamaConfig
 from .ollama import OllamaNewsSignalExtractor
 
 
 def get_llm(model_provider: Literal['anthropic', 'ollama']) -> BaseNewsSignalExtractor:
     """
-    Return the LLM we want for the news signal extractor
-
-    Args: model_provider: Literal["anthropic", "ollama"]
-
-    Returns:
-        The LLM we want for the news signal extractor
+    Get the LLM instance based on the model provider.
     """
     if model_provider == 'anthropic':
-        from .config import AnthropicConfig
-
-        config = AnthropicConfig()
-        return ClaudeNewsSignalExtractor(
-            model_name=config.model_name,
-            api_key=config.api_key,
-        )
+        return ClaudeNewsSignalExtractor()
     elif model_provider == 'ollama':
-        from .config import OllamaConfig
-
-        config = OllamaConfig()
-        return OllamaNewsSignalExtractor(
-            model_name=config.model_name,
-        )
+        return OllamaNewsSignalExtractor()
     else:
-        raise ValueError(f'Uns upported model provider: {model_provider}')
+        raise ValueError(f'Unknown model provider: {model_provider}')
