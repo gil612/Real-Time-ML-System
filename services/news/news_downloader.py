@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import List, Tuple
 
 import requests
@@ -18,7 +19,13 @@ class News(BaseModel):
     # about this piece of news.
 
     def to_dict(self) -> dict:
-        return self.model_dump()
+        # Parse the ISO format date manually
+        dt = self.published_at.replace('Z', '+00:00')
+        timestamp_ms = int(
+            datetime.strptime(dt, '%Y-%m-%dT%H:%M:%S%z').timestamp() * 1000
+        )
+
+        return {**self.model_dump(), 'timestamp_ms': timestamp_ms}
 
 
 class NewsDownloader:
