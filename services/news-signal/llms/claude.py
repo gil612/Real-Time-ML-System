@@ -45,7 +45,7 @@ class ClaudeNewsSignalExtractor(BaseNewsSignalExtractor):
     def get_signal(
         self,
         text: str,
-        output_format: Literal['dict', 'NewsSignal'] = 'dict',
+        output_format: Literal['dict', 'NewsSignal'] = 'NewsSignal',
     ) -> NewsSignal | dict:
         response: NewsSignal = self.llm.structured_predict(
             NewsSignal,
