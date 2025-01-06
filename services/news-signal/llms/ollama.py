@@ -1,85 +1,175 @@
-from typing import Any, Dict
+import time
+from typing import Literal, Optional
 
+import httpx
 from llama_index.core.prompts import PromptTemplate
 from llama_index.llms.ollama import Ollama
 from loguru import logger
 
-from .base import BaseNewsSignalExtractor, NewsSignal
-from .config import OllamaConfig
+from .base import BaseLLM, BaseNewsSignalExtractor, NewsSignal
 
 
 class OllamaNewsSignalExtractor(BaseNewsSignalExtractor):
-    def __init__(self):
-        config = OllamaConfig()
-        logger.info(f'Initializing Ollama with config: {config}')
-
-        self.model_name = config.model_name
+    def __init__(
+        self,
+        model_name: str,
+        temperature: Optional[float] = 0,
+    ):
         self.llm = Ollama(
-            model=config.model_name,
-            base_url=config.api_base,
-            temperature=0.1,
-            request_timeout=30.0,
-            additional_kwargs={
-                'verify': False,
-                'timeout': 30.0,
-                'mirostat': 0,
-                'num_ctx': 512,
-                'num_thread': 4,
-            },
+            model=model_name,
+            temperature=temperature,
         )
-        logger.info(f'Created Ollama LLM with base_url: {config.api_base}')
 
         self.prompt_template = PromptTemplate(
-            template=(
-                'System: You are a financial analyst. Analyze the sentiment and topic of news titles '
-                'and predict their impact on cryptocurrency prices. You must respond with valid JSON '
-                'that matches this exact format, including all quotes and commas:\n\n'
-                '{"btc_signal": NUMBER, "eth_signal": NUMBER, "reasoning": "YOUR ANALYSIS"}\n\n'
-                'Where NUMBER must be -1 (bearish), 0 (neutral), or 1 (bullish).\n\n'
-                'User: {text}\n\n'
-                'Assistant: '
-            )
+            template="""
+            You are a financial analyst.
+            You are given a news article and you need to determine the impact of the news on the BTC and ETH price.
+
+            You need to output the signal in the following format:
+            {
+                "btc_signal": 1,
+                "eth_signal": 0
+            }
+
+            The signal is either 1, 0, or -1.
+            1 means the price is expected to go up.
+            0 means the price is expected to stay the same.
+            -1 means the price is expected to go down.
+
+            Here is the news article:
+            {news_article}
+            """
         )
 
-    def get_signal(self, title: str) -> NewsSignal:
-        logger.info(f'Getting signal for title: {title}')
-        try:
-            response: NewsSignal = self.llm.structured_predict(
-                NewsSignal, self.prompt_template, text=title
-            )
-            logger.info(f'Got response: {response}')
+        self.model_name = model_name
+
+    def get_signal(
+        self,
+        text: str,
+        output_format: Literal['dict', 'NewsSignal'] = 'dict',
+    ) -> dict | NewsSignal:
+        """
+        Get the news signal from the given `text`
+
+        Args:
+            text: The news article to get the signal from
+            output_format: The format of the output
+
+        Returns:
+            The news signal
+        """
+        response: NewsSignal = self.llm.structured_predict(
+            NewsSignal,
+            prompt=self.prompt_template,
+            news_article=text,
+        )
+
+        if output_format == 'dict':
+            return response.to_dict()
+        else:
             return response
-        except Exception as e:
-            logger.error(f'Error getting signal: {e}')
-            # Return neutral signals on error
-            return NewsSignal(
-                btc_signal=0,
-                eth_signal=0,
-                reasoning=f'Error processing: {str(e)[:100]}',  # Truncate long error messages
+
+
+class OllamaLLM(BaseLLM):
+    def __init__(
+        self,
+        host: str = 'localhost',
+        port: int = 11434,
+        model: str = 'llama2',
+        timeout: int = 300,
+    ):
+        self.base_url = f'http://{host}:{port}'
+        self.model = model
+        self.timeout = timeout
+        self._client = None
+        self._init_client()
+
+    def _init_client(self):
+        self._client = httpx.Client(
+            base_url=self.base_url,
+            timeout=httpx.Timeout(timeout=self.timeout),
+            headers={'Content-Type': 'application/json'},
+        )
+
+    def _wait_for_server(self, max_retries: int = 5, delay: int = 5) -> bool:
+        for i in range(max_retries):
+            try:
+                response = self._client.get('/api/version')
+                if response.status_code == 200:
+                    logger.info(
+                        f'Successfully connected to Ollama server: {response.json()}'
+                    )
+                    return True
+            except Exception as e:
+                logger.warning(
+                    f'Attempt {i+1}/{max_retries} to connect to Ollama failed: {e}'
+                )
+                if i < max_retries - 1:
+                    time.sleep(delay)
+        return False
+
+    async def generate(self, prompt: str) -> str:
+        if not self._wait_for_server():
+            raise ConnectionError('Could not connect to Ollama server')
+
+        try:
+            response = self._client.post(
+                '/api/generate',
+                json={'model': self.model, 'prompt': prompt, 'stream': False},
             )
+            response.raise_for_status()
+            return response.json()['response']
+        except Exception as e:
+            logger.error(f'Error generating response from Ollama: {e}')
+            raise
 
 
 if __name__ == '__main__':
-    llm = OllamaNewsSignalExtractor()
+    from .config import OllamaConfig
+
+    config = OllamaConfig()
+
+    llm = OllamaNewsSignalExtractor(
+        model_name=config.model_name,
+    )
+
     examples = [
-        'Bitcoin Is Going Up FOREVER!',
-        'Bitcoin Is Going Down FOREVER!',
-        'Russia Weaponizing Bitcoin? New Law Allows Crypto to Bypass Western Sanctions',
+        'Bitcoin ETF ads spotted on China’s Alipay payment app',
+        'U.S. Supreme Court Lets Nvidia’s Crypto Lawsuit Move Forward',
+        'Trump’s World Liberty Acquires ETH, LINK, and AAVE in $12M Crypto Shopping Spree',
     ]
+
     for example in examples:
         print(f'Example: {example}')
         response = llm.get_signal(example)
         print(response)
 
+    """
+    Example: Bitcoin ETF ads spotted on China’s Alipay payment app
+    {
+        "btc_signal": 1,
+        "eth_signal": 0,
+        'reasoning': "The news of Bitcoin ETF ads being spotted on China's Alipay payment
+        app suggests a growing interest in Bitcoin and other cryptocurrencies among Chinese
+        investors. This could lead to increased demand for BTC, causing its price to rise."
+    }
 
-"""
-Example: Bitcoin Is Going Up FOREVER!
-{'btc_signal': 1, 'eth_signal': 0, 'reasoning': 'The statement suggests an extremely bullish sentiment towards Bitcoin, which could lead to increased investor confidence and a surge in price.'}
-Example: Bitcoin Is Going Down FOREVER!
-{'btc_signal': -1, 'eth_signal': 0, 'reasoning': "The statement 'Bitcoin Is Going Down Forever!' suggests a strong bearish sentiment, indicating that the price of BTC is expected to decline in the long term."}
-Example: Russia Weaponizing Bitcoin? New Law Allows Crypto to Bypass Western Sanctions
-{'btc_signal': 1, 'eth_signal': 0, 'reasoning': 'The new law in Russia could lead to an increase in BTC price as investors seek safe-haven assets. ETH might not be affected directly by this news.'}
-Example: Solana co-founder Stephen Akridge accused of misappropriating ex-wife's crypto gains
-{'btc_signal': -1, 'eth_signal': 0, 'reasoning': "The news about Stephen Akridge's alleged misappropriation of his ex-wife's crypto gains may lead to a decrease in investor confidence in the cryptocurrency market. This could result in a decline in BTC and ETH prices as investors become more cautious."}
+    Example: U.S. Supreme Court Lets Nvidia’s Crypto Lawsuit Move Forward
+    {
+        'btc_signal': -1,
+        'eth_signal': -1,
+        'reasoning': "The US Supreme Court's decision allows Nvidia to pursue its crypto
+        lawsuit, which could lead to increased regulatory uncertainty and potential
+        restrictions on cryptocurrency mining. This could negatively impact the prices
+        of both BTC and ETH."
+    }
 
-"""
+    Example: Trump’s World Liberty Acquires ETH, LINK, and AAVE in $12M Crypto Shopping Spree
+    {
+        'btc_signal': 0,
+        'eth_signal': 1,
+        'reasoning': "The acquisition of ETH by a major company like
+        Trump's World Liberty suggests that there is increased demand for
+        Ethereum, which could lead to an increase in its price."
+    }
+    """

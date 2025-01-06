@@ -1,4 +1,3 @@
-# from llms.claude import ClaudeNewsSignalExtractor
 from llms.base import BaseNewsSignalExtractor
 from loguru import logger
 from quixstreams import Application
@@ -11,15 +10,6 @@ def main(
     kafka_consumer_group: str,
     llm: BaseNewsSignalExtractor,
 ):
-    """Process news articles and extract trading signals using LLM.
-
-    Args:
-        kafka_broker_address: The address of the Kafka broker.
-        kafka_input_topic: The topic to consume news from.
-        kafka_output_topic: The topic to produce signals to.
-        kafka_consumer_group: The consumer group ID.
-        llm: The LLM-based signal extractor instance.
-    """
     logger.info('Hello from news-signal!')
 
     app = Application(
@@ -28,22 +18,29 @@ def main(
         auto_offset_reset='earliest',
     )
 
-    input_topic = app.topic(name=kafka_input_topic, value_deserializer='json')
+    input_topic = app.topic(
+        name=kafka_input_topic,
+        value_deserializer='json',
+    )
 
-    output_topic = app.topic(name=kafka_output_topic, value_serializer='json')
+    output_topic = app.topic(
+        name=kafka_output_topic,
+        value_serializer='json',
+    )
 
     sdf = app.dataframe(input_topic)
 
-    # Process the incoming news and output the signal
+    # Process the incoming news into a news signal
     sdf = sdf.apply(
         lambda value: {
             'news': value['title'],
-            **llm.get_signal(value['title']).to_dict(),
+            **llm.get_signal(value['title']),
             'model_name': llm.model_name,
+            'timestamp_ms': value['timestamp_ms'],
         }
     )
 
-    sdf = sdf.update(lambda value: logger.debug(f'final message: {value}'))
+    sdf = sdf.update(lambda value: logger.debug(f'Final message: {value}'))
 
     sdf = sdf.to_topic(output_topic)
 

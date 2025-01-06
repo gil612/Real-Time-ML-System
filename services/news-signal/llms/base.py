@@ -7,30 +7,29 @@ from pydantic import BaseModel, Field
 class NewsSignal(BaseModel):
     btc_signal: Literal[1, 0, -1] = Field(
         description="""
-        The impact of the news on the BTC price,
-        1 if the price is expected to go up,
-        0: if it is expected to stay the same,
-        -1: if it is expected to go down
+        The impact of the news on the BTC price.
+        1 if the price is expected to go up
+        0 if it is expected to stay the same,
+        -1 if it is expected to go down.
 
-        if the news is not related to BTC, the signal should be 0.
-    """
+        If the news is not related to BTC, the signal should be 0.
+        """
     )
 
     eth_signal: Literal[1, 0, -1] = Field(
         description="""
-        The impact of the news on the ETH price
-
+        The impact of the news on the ETH price.
         1 if the price is expected to go up
-        0: id it is expected tp stay the same,
-        -1: if it is expected to go down.
+        0 if it is expected to stay the same,
+        -1 if it is expected to go down.
 
-        if the news is not related to ETH, the signal should be 0.
+        If the news is not related to ETH, the signal should be 0.
         """
     )
 
     reasoning: str = Field(
         description="""
-        The reasoning behind the btc_signal and eth_signal is extracted from the news article.
+        The reasoning behind the btc_signal and eth_signal extracted from the news article.
         """
     )
 
@@ -45,13 +44,26 @@ class NewsSignal(BaseModel):
         }
 
 
+class BaseLLM(ABC):
+    @abstractmethod
+    async def generate(self, prompt: str) -> str:
+        """Generate a response from the LLM."""
+        pass
+
+
 class BaseNewsSignalExtractor(ABC):
     @abstractmethod
     def get_signal(
         self, text: str, output_format: Literal['dict', 'NewsSignal'] = 'dict'
     ) -> dict | NewsSignal:
-        pass
+        """
+        Get the news signal from the given `text`
 
-    # @property
-    # def model_name(self) -> str:
-    #     return self.model_name
+        Args:
+            text: The news article to get the signal from
+            output_format: The format of the output
+
+        Returns:
+            The news signal
+        """
+        pass

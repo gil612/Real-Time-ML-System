@@ -1,3 +1,5 @@
+from typing import Literal
+
 from loguru import logger
 from quixstreams import Application
 from sinks import HopsworksFeatureStoreSink
@@ -8,18 +10,28 @@ def main(
     kafka_input_topic: str,
     kafka_consumer_group: str,
     output_sink: HopsworksFeatureStoreSink,
+    data_source: Literal['live', 'historical', 'test'],
 ):
     """
     2 things:
     1. Read messages from Kafka topic
     2. Push messages to Feature Store
 
+    Args:
+        kafka_broker_address: The Kafka broker address
+        kafka_input_topic: The Kafka input topic
+        kafka_consumer_group: The Kafka consumer group
+        output_sink: The output sink
+        data_source: The data source (live, historical, test)
+    Returns:
+        None
     """
     logger.info('Hello from to-feature-store!')
 
     app = Application(
         broker_address=kafka_broker_address,
         consumer_group=kafka_consumer_group,
+        auto_offset_reset='latest' if data_source == 'live' else 'earliest',
     )
     input_topic = app.topic(kafka_input_topic, value_deserializer='json')
 
@@ -50,6 +62,7 @@ if __name__ == '__main__':
         feature_group_version=config.feature_group_version,
         feature_group_primary_keys=config.feature_group_primary_keys,
         feature_group_event_time=config.feature_group_event_time,
+        feature_group_materialization_interval_minutes=config.feature_group_materialization_interval_minutes,
     )
 
     main(
@@ -57,4 +70,5 @@ if __name__ == '__main__':
         kafka_input_topic=config.kafka_input_topic,
         kafka_consumer_group=config.kafka_consumer_group,
         output_sink=hopsworks_sink,
+        data_source=config.data_source,
     )

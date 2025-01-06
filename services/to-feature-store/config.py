@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     feature_group_version: int
     feature_group_primary_keys: list[str]
     feature_group_event_time: str
+    feature_group_materialization_interval_minutes: int = 60  # Add default value
+    data_source: str = 'default_source'  # Add default value
 
 
 class HopsworksCredentials(BaseSettings):

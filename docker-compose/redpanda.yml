@@ -1,4 +1,4 @@
-version: '3.7'
+
 name: redpanda-dev-cluster
 networks:
   redpanda_network:
