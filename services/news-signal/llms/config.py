@@ -1,5 +1,3 @@
-from typing import Dict
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 

@@ -1,7 +1,48 @@
 # from llms.claude import ClaudeNewsSignalExtractor
 from llms.base import BaseNewsSignalExtractor
 from loguru import logger
+from ollama._types import ResponseError
 from quixstreams import Application
+
+
+def process_news(value, llm):
+    """Process a single news item and extract trading signals.
+
+    Args:
+        value: The news item dictionary containing 'title' and other fields
+        llm: The LLM-based signal extractor instance
+
+    Returns:
+        dict: Processed message with signal data
+    """
+    try:
+        signal_data = llm.get_signal(value['title'])
+        return {
+            'news': value['title'],
+            **signal_data,
+            'model_name': llm.model_name,
+            'error': None,
+        }
+    except ResponseError as e:
+        if 'model requires more system memory' in str(e):
+            logger.error(f'Insufficient memory for model. Error: {e}')
+            return {
+                'news': value['title'],
+                'sentiment': 'neutral',  # Default fallback
+                'confidence': 0.0,
+                'model_name': llm.model_name,
+                'error': str(e),
+            }
+        raise  # Re-raise other ResponseErrors
+    except Exception as e:
+        logger.error(f'Error processing news: {e}')
+        return {
+            'news': value['title'],
+            'sentiment': 'neutral',  # Default fallback
+            'confidence': 0.0,
+            'model_name': llm.model_name,
+            'error': str(e),
+        }
 
 
 def main(
@@ -40,6 +81,7 @@ def main(
             'news': value['title'],
             **llm.get_signal(value['title']),
             'model_name': llm.model_name,
+            'timestamp_ms': value['timestamp_ms'],
         }
     )
 

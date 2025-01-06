@@ -7,7 +7,11 @@ from .base import BaseNewsSignalExtractor, NewsSignal
 
 
 class OllamaNewsSignalExtractor(BaseNewsSignalExtractor):
-    def __init__(self, model_name: str = 'llama3.2', temperature: Optional[float] = 0):
+    def __init__(
+        self,
+        model_name: str,
+        temperature: Optional[float] = 0,
+    ):
         self.llm = Ollama(
             model=model_name,
             temperature=temperature,
@@ -16,14 +20,15 @@ class OllamaNewsSignalExtractor(BaseNewsSignalExtractor):
         self.prompt_template = PromptTemplate(
             template="""
             You are a financial analyst.
-            You are given a news item and you need to determine the impact of the news on the BTC and ETH price.
+            You are given a news article and you need to determine the impact of the news on the BTC and ETH price.
+
             You need to output the signal in the following format:
             {
                 "btc_signal": 1,
                 "eth_signal": 0
             }
 
-            The signal is either 1, 0 or -1.
+            The signal is either 1, 0, or -1.
             1 means the price is expected to go up.
             0 means the price is expected to stay the same.
             -1 means the price is expected to go down.
@@ -39,13 +44,13 @@ class OllamaNewsSignalExtractor(BaseNewsSignalExtractor):
         self,
         text: str,
         output_format: Literal['dict', 'NewsSignal'] = 'dict',
-    ) -> NewsSignal | dict:
+    ) -> dict | NewsSignal:
         """
-        Get the news signa from the given @text
+        Get the news signal from the given `text`
 
         Args:
-            text: The news article to get signal form
-            output_format: The format of the output. Can be "dict" or "NewsSignal"
+            text: The news article to get the signal from
+            output_format: The format of the output
 
         Returns:
             The news signal
@@ -55,12 +60,11 @@ class OllamaNewsSignalExtractor(BaseNewsSignalExtractor):
             prompt=self.prompt_template,
             news_article=text,
         )
-        self.output_format = output_format
 
         if output_format == 'dict':
             return response.to_dict()
-
-        return response
+        else:
+            return response
 
 
 if __name__ == '__main__':
@@ -71,27 +75,44 @@ if __name__ == '__main__':
     llm = OllamaNewsSignalExtractor(
         model_name=config.model_name,
     )
+
     examples = [
-        'Bitcoin Is Going Up FOREVER!',
-        'Bitcoin Is Going Down FOREVER!',
-        # "The Ghosts of Bitcoins Past",  # -> ValueError: Expected at least one tool call, but got 0 tool calls.
-        'Russia Weaponizing Bitcoin? New Law Allows Crypto to Bypass Western Sanctions',
-        'Solana co-founder Stephen Akridge accused of misappropriating ex-wife’s crypto gains',
+        'Bitcoin ETF ads spotted on China’s Alipay payment app',
+        'U.S. Supreme Court Lets Nvidia’s Crypto Lawsuit Move Forward',
+        'Trump’s World Liberty Acquires ETH, LINK, and AAVE in $12M Crypto Shopping Spree',
     ]
+
     for example in examples:
         print(f'Example: {example}')
         response = llm.get_signal(example)
         print(response)
 
+    """
+    Example: Bitcoin ETF ads spotted on China’s Alipay payment app
+    {
+        "btc_signal": 1,
+        "eth_signal": 0,
+        'reasoning': "The news of Bitcoin ETF ads being spotted on China's Alipay payment
+        app suggests a growing interest in Bitcoin and other cryptocurrencies among Chinese
+        investors. This could lead to increased demand for BTC, causing its price to rise."
+    }
 
-"""
-Example: Bitcoin Is Going Up FOREVER!
-{'btc_signal': 1, 'eth_signal': 0, 'reasoning': 'The statement suggests an extremely bullish sentiment towards Bitcoin, which could lead to increased investor confidence and a surge in price.'}
-Example: Bitcoin Is Going Down FOREVER!
-{'btc_signal': -1, 'eth_signal': 0, 'reasoning': "The statement 'Bitcoin Is Going Down Forever!' suggests a strong bearish sentiment, indicating that the price of BTC is expected to decline in the long term."}
-Example: Russia Weaponizing Bitcoin? New Law Allows Crypto to Bypass Western Sanctions
-{'btc_signal': 1, 'eth_signal': 0, 'reasoning': 'The new law in Russia could lead to an increase in BTC price as investors seek safe-haven assets. ETH might not be affected directly by this news.'}
-Example: Solana co-founder Stephen Akridge accused of misappropriating ex-wife’s crypto gains
-{'btc_signal': -1, 'eth_signal': 0, 'reasoning': "The news about Stephen Akridge's alleged misappropriation of his ex-wife's crypto gains may lead to a decrease in investor confidence in the cryptocurrency market. This could result in a decline in BTC and ETH prices as investors become more cautious."}
+    Example: U.S. Supreme Court Lets Nvidia’s Crypto Lawsuit Move Forward
+    {
+        'btc_signal': -1,
+        'eth_signal': -1,
+        'reasoning': "The US Supreme Court's decision allows Nvidia to pursue its crypto
+        lawsuit, which could lead to increased regulatory uncertainty and potential
+        restrictions on cryptocurrency mining. This could negatively impact the prices
+        of both BTC and ETH."
+    }
 
-"""
+    Example: Trump’s World Liberty Acquires ETH, LINK, and AAVE in $12M Crypto Shopping Spree
+    {
+        'btc_signal': 0,
+        'eth_signal': 1,
+        'reasoning': "The acquisition of ETH by a major company like
+        Trump's World Liberty suggests that there is increased demand for
+        Ethereum, which could lead to an increase in its price."
+    }
+    """
