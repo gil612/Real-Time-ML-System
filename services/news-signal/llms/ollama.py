@@ -2,8 +2,10 @@ from typing import Literal, Optional
 
 from llama_index.core.prompts import PromptTemplate
 from llama_index.llms.ollama import Ollama
+from loguru import logger
 
 from .base import BaseNewsSignalExtractor, NewsSignal
+from .config import OllamaConfig
 
 
 class OllamaNewsSignalExtractor(BaseNewsSignalExtractor):
@@ -13,9 +15,19 @@ class OllamaNewsSignalExtractor(BaseNewsSignalExtractor):
         temperature: Optional[float] = 0,
     ):
         self.llm = Ollama(
-            model=model_name,
-            temperature=temperature,
+            model=config.model_name,
+            base_url=config.api_base,
+            temperature=0.1,
+            request_timeout=30.0,
+            additional_kwargs={
+                'verify': False,
+                'timeout': 30.0,
+                'mirostat': 0,
+                'num_ctx': 512,
+                'num_thread': 4,
+            },
         )
+        logger.info(f'Created Ollama LLM with base_url: {config.api_base}')
 
         self.prompt_template = PromptTemplate(
             template="""

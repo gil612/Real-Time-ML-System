@@ -8,5 +8,5 @@ dependencies = [
     "loguru>=0.7.3",
     "pydantic-settings>=2.6.1",
     "quixstreams>=3.4.0",
-    "requests>=2.32.3",
+    "requests>=2.32.3"
 ]
