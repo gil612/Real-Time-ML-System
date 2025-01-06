@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> 24f705ee4faaebfad5605a2c5154ecc122f4cef2
 name: news-signal-pipeline
 networks:
   redpanda_network:
@@ -15,7 +19,6 @@ services:
     environment:
       - KAFKA_BROKER_ADDRESS=redpanda:9092
     # restart: always
-
   news-signal:
     build:
       context: ../services/news-signal
@@ -29,7 +32,6 @@ services:
       - KAFKA_BROKER_ADDRESS=redpanda:9092
       - MODEL_PROVIDER=anthropic
     # restart: always
-
   to-feature-store:
     build:
       context: ../services/to-feature-store
