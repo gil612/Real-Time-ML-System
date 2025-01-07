@@ -49,12 +49,14 @@ def generate_dataset(
     for news_item in tqdm(news):
         try:
             signals = llm.get_signal(news_item)
-            breakpoint()
+
             output = {
                 'instruction': instruction,
                 'input': news_item,
-                'output': json.dumps(signals),
+                'output': signals.model_dump_json(),
             }
+
+            breakpoint()
 
             # append to file
             with open(output_file, 'a') as f:
