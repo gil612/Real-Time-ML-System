@@ -51,3 +51,6 @@ setup-ollama:
 	@powershell -Command "Write-Host 'Installing curl in Ollama container...'; docker exec ollama apt-get update; docker exec ollama apt-get install -y curl"
 	docker exec ollama ollama pull llama3.2:3b
 	@powershell -Command "Write-Host 'Waiting for model to load...'; Start-Sleep -Seconds 30"
+
+golden-dataset:
+	uv run python -m golden-dataset
