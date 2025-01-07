@@ -28,7 +28,15 @@ def generate_dataset(
     model_provider: Literal['anthropic', 'ollama'],
     n: int,
     output_file: str,
-) -> list[dict]:
+) -> None:
+    """
+    generate a golden dataset with tuples to do Supervised Fine Tuning.
+
+    Args:
+        model_provider: the model provider to use
+        n: the number of news to generate
+        output_file: the file to write the dataset to
+    """
     # load dataset
     import pandas as pd
 
@@ -48,12 +56,12 @@ def generate_dataset(
 
     for news_item in tqdm(news):
         try:
-            signals = llm.get_signal(news_item)
+            signals = llm.get_signal(news_item, output_format='NewsSignal')
 
             output = {
                 'instruction': instruction,
                 'input': news_item,
-                'output': signals.model_dump_json(),
+                'output': json.dumps(signals.model_dump()),
                 'teacher_model_name': llm.model_name,
             }
 
@@ -68,8 +76,6 @@ def generate_dataset(
 
 
 if __name__ == '__main__':
-    generate_dataset(
-        model_provider='anthropic',
-        n=1000,
-        output_file='./data/golden_dataset_anthropic.jsonl',
-    )
+    from fire import Fire
+
+    Fire(generate_dataset)

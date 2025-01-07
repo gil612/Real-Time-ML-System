@@ -16,6 +16,7 @@ dependencies = [
     "loguru>=0.7.3",
     "llama-index-llms-ollama>=0.5.0",
     "pandas>=2.2.3",
+    "fire>=0.7.0",
 ]
 
 [tool.setuptools]

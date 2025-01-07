@@ -52,5 +52,16 @@ setup-ollama:
 	docker exec ollama ollama pull llama3.2:3b
 	@powershell -Command "Write-Host 'Waiting for model to load...'; Start-Sleep -Seconds 30"
 
-golden-dataset:
-	uv run python -m golden-dataset
+# To generate a golden dataset with tuples to do
+# Supervised Fine Tuning
+golden-dataset-with-claude:
+	uv run python golden-dataset.py \
+	 --model-provider anthropic \
+	 --n 1000 \
+	 --output-file ./data/golden_dataset_anthropic.jsonl
+
+golden-dataset-with-ollama:
+	uv run python golden-dataset.py \
+	 --model-provider ollama \
+	 --n 1000 \
+	 --output-file ./data/golden_dataset_ollama.jsonl
