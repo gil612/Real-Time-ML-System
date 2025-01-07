@@ -42,7 +42,7 @@ def generate_dataset(
 
     from llms.factory import get_llm
 
-    llm = get_llm(model_provider)
+    llm = get_llm(model_provider=model_provider)
 
     from tqdm import tqdm
 
@@ -54,9 +54,10 @@ def generate_dataset(
                 'instruction': instruction,
                 'input': news_item,
                 'output': signals.model_dump_json(),
+                'teacher_model_name': llm.model_name,
             }
 
-            breakpoint()
+            # breakpoint()
 
             # append to file
             with open(output_file, 'a') as f:
@@ -70,5 +71,5 @@ if __name__ == '__main__':
     generate_dataset(
         model_provider='anthropic',
         n=1000,
-        output_file='data/golden_dataset_anthropic.jsonl',
+        output_file='./data/golden_dataset_anthropic.jsonl',
     )
