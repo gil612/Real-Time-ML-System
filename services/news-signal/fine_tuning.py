@@ -123,7 +123,7 @@ def run(
         base_llm_name: str,
         dataset_path: str,
         comet_ml_project_name: str,
-        comet_ml_api_key: str,
+
         ):
     """
     
@@ -157,7 +157,7 @@ def run(
 
 
 if __name__ == '__main__':
-    fine_tune_base_llm(
-        base_llm_name='meta-llama/Llama-3.2-1B-bnb-4bit',
-        dataset_path='data\golden_dataset_ollama.jsonl'
-    )    
+    from fire import Fire
+    Fire(
+        run
+    )

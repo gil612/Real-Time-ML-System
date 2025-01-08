@@ -3,29 +3,25 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "news_signal"
+name = "news-signal"
 version = "0.1.0"
-description = "News Signal Service"
-requires-python = ">=3.8"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "llama-index-core>=0.12.5",
+    "llama-index-llms-anthropic>=0.5.0",
+    "pydantic>=2.10.3",
+    "pydantic-settings>=2.6.1",
+    "quixstreams>=3.4.0",
+    "loguru>=0.7.3",
+    "llama-index-llms-ollama>=0.5.0",
+    "fire>=0.7.0",
+    "unsloth>=2024.12.4",
+    "datasets>=3.2.0",
+    "comet-ml>=3.47.5",
+    "setuptools>=75.6.0",
+]
 
 [tool.setuptools]
 packages = ["news_signal"]
-
-[tool.ruff]
-line-length = 88
-lint.select = [
-    "C",  # mccabe rules
-    "F",  # pyflakes rules
-    "E",  # pycodestyle error rules
-    "W",  # pycodestyle warning rules
-    "B",  # flake8-bugbear rules
-    "I",  # isort rules
-]
-lint.ignore = [
-    "C901",  # max-complexity-10
-    "E501",  # line-too-long
-]
-
-[tool.ruff.format]
-indent-style = "space"
-quote-style = "single"

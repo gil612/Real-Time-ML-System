@@ -65,3 +65,9 @@ golden-dataset-with-ollama:
 	 --model-provider ollama \
 	 --n 1000 \
 	 --output-file ./data/golden_dataset_ollama.jsonl
+
+fine-tune:
+	uv run python fine_tuning.py \
+	 --base-llm-name meta-llama/Llama-3.2-1B-bnb-4bit \
+	 --dataset-path ./data/golden_dataset_ollama.jsonl \
+	 --comet-ml-project-name news-signal-extractor

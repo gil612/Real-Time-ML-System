@@ -1,7 +1,7 @@
 # An example using multi-stage image builds to create a final image without uv.
 
 # First stage: build dependencies
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm AS builder
+FROM ghcr.io/astral-sh/uv:python3.10-bookworm AS builder
 
 WORKDIR /app
 
@@ -32,7 +32,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 
 # Second stage: final image
-FROM python:3.12-bookworm
+FROM python:3.10-slim
 
 WORKDIR /app
 
@@ -46,7 +46,7 @@ RUN useradd -m -u 1000 app
 
 # Copy installed dependencies and application code
 COPY --from=builder --chown=app:app /app /app
-COPY --from=builder --chown=app:app /usr/local/lib/python3.12/site-packages/ /usr/local/lib/python3.12/site-packages/
+COPY --from=builder --chown=app:app /usr/local/lib/python3.10/site-packages/ /usr/local/lib/python3.10/site-packages/
 
 # Add app directory to Python path
 ENV PYTHONPATH=/app
