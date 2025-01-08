@@ -59,7 +59,7 @@ def generate_dataset(
             signals = llm.get_signal(news_item, output_format='NewsSignal')
 
             output = {
-                'instruction': instruction,
+                # 'instruction': instruction,
                 'input': news_item,
                 'output': json.dumps(signals.model_dump()),
                 'teacher_model_name': llm.model_name,
