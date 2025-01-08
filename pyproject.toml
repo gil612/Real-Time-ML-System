@@ -17,3 +17,7 @@ lint.ignore = [
 [tool.ruff.format]
 indent-style = "space"
 quote-style = "single"
+
+
+[tool.setuptools]
+packages = ["news_signal"]
