@@ -1,8 +1,12 @@
+version: '3.8'
+
 name: news-signal-pipeline
 networks:
   redpanda_network:
     external: true
     name: redpanda_network
+  kafka_network:
+    external: true
 services:
   news:
     build:
@@ -20,15 +24,22 @@ services:
     build:
       context: ../services/news-signal
       dockerfile: Dockerfile
-    networks:
-      - redpanda_network
-    env_file:
-      - ../services/news-signal/settings.env
-      - ../services/news-signal/anthropic_credentials.env
     environment:
-      - KAFKA_BROKER_ADDRESS=redpanda:9092
-      - MODEL_PROVIDER=anthropic
-    # restart: always
+      - KAFKA_BROKER_ADDRESS=${KAFKA_BROKER_ADDRESS:-kafka:9092}
+      - KAFKA_INPUT_TOPIC=${KAFKA_INPUT_TOPIC:-news}
+      - KAFKA_OUTPUT_TOPIC=${KAFKA_OUTPUT_TOPIC:-news-signals}
+      - KAFKA_CONSUMER_GROUP=${KAFKA_CONSUMER_GROUP:-news-signal}
+      - MODEL_PROVIDER=${MODEL_PROVIDER:-ollama}
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+        reservations:
+          memory: 6G
+    networks:
+      - kafka_network
+    depends_on:
+      - kafka
 
   to-feature-store:
     build:
