@@ -1,12 +1,9 @@
-import time
 from typing import Literal, Optional
 
-import httpx
 from llama_index.core.prompts import PromptTemplate
 from llama_index.llms.ollama import Ollama
-from loguru import logger
 
-from .base import BaseLLM, BaseNewsSignalExtractor, NewsSignal
+from .base import BaseNewsSignalExtractor, NewsSignal
 
 
 class OllamaNewsSignalExtractor(BaseNewsSignalExtractor):
@@ -15,6 +12,7 @@ class OllamaNewsSignalExtractor(BaseNewsSignalExtractor):
         model_name: str,
         temperature: Optional[float] = 0,
     ):
+        super().__init__(model_name=model_name)
         self.llm = Ollama(
             model=model_name,
             temperature=temperature,
@@ -41,8 +39,6 @@ class OllamaNewsSignalExtractor(BaseNewsSignalExtractor):
             """
         )
 
-        self.model_name = model_name
-
     def get_signal(
         self,
         text: str,
@@ -68,60 +64,6 @@ class OllamaNewsSignalExtractor(BaseNewsSignalExtractor):
             return response.to_dict()
         else:
             return response
-
-
-class OllamaLLM(BaseLLM):
-    def __init__(
-        self,
-        host: str = 'localhost',
-        port: int = 11434,
-        model: str = 'llama2',
-        timeout: int = 300,
-    ):
-        self.base_url = f'http://{host}:{port}'
-        self.model = model
-        self.timeout = timeout
-        self._client = None
-        self._init_client()
-
-    def _init_client(self):
-        self._client = httpx.Client(
-            base_url=self.base_url,
-            timeout=httpx.Timeout(timeout=self.timeout),
-            headers={'Content-Type': 'application/json'},
-        )
-
-    def _wait_for_server(self, max_retries: int = 5, delay: int = 5) -> bool:
-        for i in range(max_retries):
-            try:
-                response = self._client.get('/api/version')
-                if response.status_code == 200:
-                    logger.info(
-                        f'Successfully connected to Ollama server: {response.json()}'
-                    )
-                    return True
-            except Exception as e:
-                logger.warning(
-                    f'Attempt {i+1}/{max_retries} to connect to Ollama failed: {e}'
-                )
-                if i < max_retries - 1:
-                    time.sleep(delay)
-        return False
-
-    async def generate(self, prompt: str) -> str:
-        if not self._wait_for_server():
-            raise ConnectionError('Could not connect to Ollama server')
-
-        try:
-            response = self._client.post(
-                '/api/generate',
-                json={'model': self.model, 'prompt': prompt, 'stream': False},
-            )
-            response.raise_for_status()
-            return response.json()['response']
-        except Exception as e:
-            logger.error(f'Error generating response from Ollama: {e}')
-            raise
 
 
 if __name__ == '__main__':

@@ -1,21 +1,18 @@
-[build-system]
-requires = ["setuptools>=45", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "news-signal"
 version = "0.1.0"
-description = "News Signal Processing Service"
+description = "Add your description here"
+readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "llama-index-core>=0.12.5",
-    "llama-index-llms-anthropic>=0.5.0",
-    "pydantic>=2.10.3",
-    "pydantic-settings>=2.6.1",
-    "quixstreams>=3.4.0",
+    "comet-ml>=3.47.6",
+    "datasets>=3.2.0",
+    "fire>=0.7.0",
     "loguru>=0.7.3",
-    "llama-index-llms-ollama>=0.5.0",
+    "scikit-learn>=1.6.1",
+    "setuptools>=75.8.0",
+    "unsloth>=2025.1.5",
 ]
 
 [tool.setuptools]
-packages = ["llms", "state"]
+packages = ["news_signal"]

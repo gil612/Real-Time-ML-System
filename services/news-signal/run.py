@@ -15,32 +15,32 @@ def process_news(value, llm):
         dict: Processed message with signal data
     """
     try:
-        signal_data = llm.get_signal(value['title'])
+        signal_data = llm.get_signal(value["title"])
         return {
-            'news': value['title'],
+            "news": value["title"],
             **signal_data,
-            'model_name': llm.model_name,
-            'error': None,
+            "model_name": llm.model_name,
+            "error": None,
         }
     except ResponseError as e:
-        if 'model requires more system memory' in str(e):
-            logger.error(f'Insufficient memory for model. Error: {e}')
+        if "model requires more system memory" in str(e):
+            logger.error(f"Insufficient memory for model. Error: {e}")
             return {
-                'news': value['title'],
-                'sentiment': 'neutral',  # Default fallback
-                'confidence': 0.0,
-                'model_name': llm.model_name,
-                'error': str(e),
+                "news": value["title"],
+                "sentiment": "neutral",  # Default fallback
+                "confidence": 0.0,
+                "model_name": llm.model_name,
+                "error": str(e),
             }
         raise  # Re-raise other ResponseErrors
     except Exception as e:
-        logger.error(f'Error processing news: {e}')
+        logger.error(f"Error processing news: {e}")
         return {
-            'news': value['title'],
-            'sentiment': 'neutral',  # Default fallback
-            'confidence': 0.0,
-            'model_name': llm.model_name,
-            'error': str(e),
+            "news": value["title"],
+            "sentiment": "neutral",  # Default fallback
+            "confidence": 0.0,
+            "model_name": llm.model_name,
+            "error": str(e),
         }
 
 
@@ -51,22 +51,22 @@ def main(
     kafka_consumer_group: str,
     llm: BaseNewsSignalExtractor,
 ):
-    logger.info('Hello from news-signal!')
+    logger.info("Hello from news-signal!")
 
     app = Application(
         broker_address=kafka_broker_address,
         consumer_group=kafka_consumer_group,
-        auto_offset_reset='earliest',
+        auto_offset_reset="earliest",
     )
 
     input_topic = app.topic(
         name=kafka_input_topic,
-        value_deserializer='json',
+        value_deserializer="json",
     )
 
     output_topic = app.topic(
         name=kafka_output_topic,
-        value_serializer='json',
+        value_serializer="json",
     )
 
     sdf = app.dataframe(input_topic)
@@ -74,25 +74,25 @@ def main(
     # Process the incoming news into a news signal
     sdf = sdf.apply(
         lambda value: {
-            'news': value['title'],
-            **llm.get_signal(value['title']),
-            'model_name': llm.model_name,
-            'timestamp_ms': value['timestamp_ms'],
+            "news": value["title"],
+            **llm.get_signal(value["title"]).to_dict(),
+            "model_name": llm.model_name,
+            "timestamp_ms": value["timestamp_ms"],
         }
     )
 
-    sdf = sdf.update(lambda value: logger.debug(f'Final message: {value}'))
+    sdf = sdf.update(lambda value: logger.debug(f"Final message: {value}"))
 
     sdf = sdf.to_topic(output_topic)
 
     app.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from config import config
     from llms.factory import get_llm
 
-    logger.info(f'Using model provider: {config.model_provider}')
+    logger.info(f"Using model provider: {config.model_provider}")
     llm = get_llm(config.model_provider)
 
     main(

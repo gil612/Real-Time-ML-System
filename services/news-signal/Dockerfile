@@ -1,9 +1,8 @@
 # An example using multi-stage image builds to create a final image without uv.
 
-# First, build the application in the `/app` directory.
-# See `Dockerfile` for details.
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm AS builder
-ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
+# First stage: build dependencies
+FROM ghcr.io/astral-sh/uv:python3.10-bookworm AS builder
+
 WORKDIR /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
@@ -13,16 +12,14 @@ ADD . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 
-
-# Then, use a final image without uv
-FROM python:3.12-bookworm
-# It is important to use the image that matches the builder, as the path to the
-# Python executable must be the same.
+# Second stage: final image
+FROM python:3.10-slim
 
 WORKDIR /app
 
 # Copy the application from the builder
 COPY --from=builder --chown=app:app /app /app
+COPY --from=builder --chown=app:app /usr/local/lib/python3.10/site-packages/ /usr/local/lib/python3.10/site-packages/
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"

@@ -43,3 +43,23 @@ setup-ollama:
 	@powershell -Command "Write-Host 'Installing curl in Ollama container...'; docker exec ollama apt-get update; docker exec ollama apt-get install -y curl"
 	docker exec ollama ollama pull llama3.2:3b
 	@powershell -Command "Write-Host 'Waiting for model to load...'; Start-Sleep -Seconds 30"
+
+# To generate a golden dataset with tuples to do
+# Supervised Fine Tuning
+golden-dataset-with-claude:
+	uv run python golden-dataset.py \
+	 --model-provider anthropic \
+	 --n 1000 \
+	 --output-file ./data/golden_dataset_anthropic.jsonl
+
+golden-dataset-with-ollama:
+	uv run python golden-dataset.py \
+	 --model-provider ollama \
+	 --n 1000 \
+	 --output-file ./data/golden_dataset_ollama.jsonl
+
+fine-tune:
+	uv run python fine_tuning.py \
+	 --base-llm-name unsloth/Llama-3.2-1B-bnb-4bit \
+	 --dataset-path ./data/golden_dataset_ollama.jsonl \
+	 --comet-ml-project-name news-signal-extractor
