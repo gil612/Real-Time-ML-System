@@ -7,8 +7,7 @@ from transformers import AutoTokenizer, TrainingArguments
 from datasets import load_dataset, Dataset
 import torch
 from trl import SFTTrainer
-
-
+from sklearn.model_selection import train_test_split
 
 def load_base_llm_and_tokenizer(
         base_llm_name: str,
@@ -62,29 +61,25 @@ def add_lora_adapters(
         use_rslora = False,  # We support rank stabilized LoRA
         loftq_config = None, # And LoftQ
     )
-
     return model
     
-
-
-def load_dataset_and_format_dataset(
+def load_and_split_dataset(
     dataset_path: str,
     eos_token: str,
-    ) -> Dataset:
+    ) -> Tuple[Dataset, Dataset]:
     """
     Loads and preprocesses the dataset.
     """
     # load the dataset form JSONL file into a HuggingFace Dataset Object
     logger.info(f"Loading and preprocessing dataset {dataset_path}")
     dataset = load_dataset("json", data_files=dataset_path)
+    dataset = dataset['train']
 
     def format_prompts(examples):
     # chat template we use to format the data we feed into the model
-        alpaca_prompt = """Below is an instruction that describes a task, paired with an input that provies further context. Write a responde that appropiatley completes the request."""
+        alpaca_prompt = """Below is an instruction that describes a task, paired with an input that provies further context. Write a responde that appropiatley completes the request.
 
-        """
-        ### Istruction:
-        {}
+
 
         ### Input:
         {}
@@ -93,7 +88,7 @@ def load_dataset_and_format_dataset(
         {}
         """
         
-        # instructions = examples["Instruction"]
+        # instructions = examples["Instruction"] # Imstruction are omitted from the dataset
         inputs = examples["input"]
         outputs = examples["output"]
         texts = []
@@ -105,13 +100,15 @@ def load_dataset_and_format_dataset(
         return { "text" : texts, }
 
     dataset = dataset.map(format_prompts, batched = True,)
-    # breakpoint()
-    return dataset['train']
+    # split the dataset into train and test, with a fix seed to ensure reproducibility
+    dataset = dataset.train_test_split(test_size=0.1, seed=42)
+    return dataset['train'], dataset['test']
 
-def fine_tune_model(
+def fine_tune(
         model: FastLanguageModel,
         tokenizer: AutoTokenizer,
-        dataset: Dataset,
+        train_dataset: Dataset,
+        test_dataset: Dataset,
         max_seq_length: int,
 
         ):
@@ -125,7 +122,7 @@ def fine_tune_model(
     trainer=SFTTrainer(
         model=model,
         tokenizer=tokenizer,
-        train_dataset=dataset,
+        train_dataset=train_dataset,
         dataset_text_field="text",
         max_seq_length=max_seq_length,
         dataset_num_proc=2,
@@ -133,9 +130,9 @@ def fine_tune_model(
         args=TrainingArguments(
             per_device_train_batch_size=2,
             gradient_accumulation_steps=4,
-            warmup_steps=60,
+            warmup_steps=5,
             learning_rate=2e-4,
-
+            max_steps=60,
             fp16=not is_bfloat16_supported(),
             bf16=is_bfloat16_supported(),
             logging_steps=1,
@@ -147,11 +144,33 @@ def fine_tune_model(
             report_to="comet_ml", # Use this for WandB etc
         ),
     )
-
+    # start training
     trainer.train()
 
-
-
+    trainer=SFTTrainer(
+        model=model,
+        tokenizer=tokenizer,
+        train_dataset=train_dataset,
+        dataset_text_field="text",
+        max_seq_length=max_seq_length,
+        dataset_num_proc=2,
+        packing=False, # Can make training 5x faster for shoert sequences.
+        args=TrainingArguments(
+            per_device_train_batch_size=2,
+            gradient_accumulation_steps=4,
+            warmup_steps=5,
+            learning_rate=2e-4,
+            max_steps=60,
+            fp16=not is_bfloat16_supported(),
+            bf16=is_bfloat16_supported(),
+            logging_steps=1,
+            optim="adamw_8bit",
+            weight_decay=0.01,
+            lr_scheduler_type="linear",
+            seed = 3407,
+            output_dir="outputs",
+            report_to="comet_ml", # Use this for WandB etc
+        ),
 
 def run(
         base_llm_name: str,
@@ -182,12 +201,12 @@ def run(
     # 2. add LoRA adapters to the base model
     model = add_lora_adapters(model)
 
-    # 3. Load the dataset with (instructions, input, output) tuples into a HiggingFace Dataset Object
-    dataset = load_dataset_and_format_dataset(dataset_path, eos_token=tokenizer.eos_token)
+    # 3. Load the dataset with (instruction, input, output) tuples into a HuggingFace Dataset object
+    # with alpaca prompt format
+    train_dataset, test_dataset = load_and_split_dataset(dataset_path, eos_token=tokenizer.eos_token)
 
-
-    # Fine-tune the base LLM
-    fine_tune_model(model, tokenizer, dataset, max_seq_length=max_seq_length)
+    # 4. Fine-tune the base LLM
+    fine_tune(model, tokenizer, train_dataset, test_dataset, max_seq_length=max_seq_length)
 
 
 if __name__ == '__main__':
