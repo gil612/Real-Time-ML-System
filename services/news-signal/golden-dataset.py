@@ -25,7 +25,7 @@ Do not output data for a given coin if the news is not relevant to it.
 
 
 def generate_dataset(
-    model_provider: Literal['anthropic', 'ollama'],
+    model_provider: Literal["anthropic", "ollama"],
     n: int,
     output_file: str,
 ) -> None:
@@ -40,8 +40,8 @@ def generate_dataset(
     # load dataset
     import pandas as pd
 
-    df = pd.read_csv('data/cryptopanic_news.csv')
-    news = df['title'].tolist()
+    df = pd.read_csv("data/cryptopanic_news.csv")
+    news = df["title"].tolist()
 
     # random sample n news
     import random
@@ -56,26 +56,26 @@ def generate_dataset(
 
     for news_item in tqdm(news):
         try:
-            signals = llm.get_signal(news_item, output_format='NewsSignal')
+            signals = llm.get_signal(news_item, output_format="NewsSignal")
 
             output = {
-                # 'instruction': instruction,
-                'input': news_item,
-                'output': json.dumps(signals.model_dump()),
-                'teacher_model_name': llm.model_name,
+                "instruction": instruction,
+                "input": news_item,
+                "output": json.dumps(signals.model_dump()),
+                "teacher_model_name": llm.model_name,
             }
 
             # breakpoint()
 
             # append to file
-            with open(output_file, 'a') as f:
-                f.write(json.dumps(output) + '\n')
+            with open(output_file, "a") as f:
+                f.write(json.dumps(output) + "\n")
         except Exception as e:
-            print(f'Error processing news item: {e}')
+            print(f"Error processing news item: {e}")
             continue
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from fire import Fire
 
     Fire(generate_dataset)

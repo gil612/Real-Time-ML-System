@@ -3,16 +3,28 @@ name = "news-signal"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "comet-ml>=3.47.6",
     "datasets>=3.2.0",
     "fire>=0.7.0",
     "loguru>=0.7.3",
-    "scikit-learn>=1.6.1",
+    "pydantic-settings==2.6.0",
+    "pydantic==2.9.0",
     "setuptools>=75.8.0",
-    "unsloth>=2025.1.5",
+    "ollama==0.4.5",
+    "quixstreams>=2.11.1",
+    "numpy==1.26.4",
+    "pandas==2.2.1",
+    "llama-index>=0.10.0",
+    "llama-index-llms-anthropic>=0.1.0",
+    "llama-index-llms-ollama>=0.1.0",
 ]
 
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [tool.setuptools]
-packages = ["news_signal"]
+packages = ["llms"]
+package-dir = {"llms" = "llms"}
