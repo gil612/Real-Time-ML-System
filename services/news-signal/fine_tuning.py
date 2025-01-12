@@ -1,4 +1,4 @@
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Literal
 import os
 import comet_ml
 from loguru import logger
@@ -70,16 +70,20 @@ def load_and_split_dataset(
     """
     Loads and preprocesses the dataset.
     """
-    # load the dataset form JSONL file into a HuggingFace Dataset Object
+    # load the dataset from JSONL file into a HuggingFace Dataset Object
     logger.info(f"Loading and preprocessing dataset {dataset_path}")
     dataset = load_dataset("json", data_files=dataset_path)
     dataset = dataset['train']
 
+    # Let's first print the column names to debug
+    logger.info(f"Dataset columns: {dataset.column_names}")
+
     def format_prompts(examples):
-    # chat template we use to format the data we feed into the model
-        alpaca_prompt = """Below is an instruction that describes a task, paired with an input that provies further context. Write a responde that appropiatley completes the request.
+        # chat template we use to format the data we feed into the model
+        alpaca_prompt = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
 
-
+        ### Instruction:
+        {}
 
         ### Input:
         {}
@@ -88,18 +92,19 @@ def load_and_split_dataset(
         {}
         """
         
-        # instructions = examples["Instruction"] # Imstruction are omitted from the dataset
+        # Assuming your columns are lowercase
+        instructions = examples["instruction"]  # Changed from "Instruction"
         inputs = examples["input"]
         outputs = examples["output"]
         texts = []
-        for input, output in zip(inputs, outputs):
+        for instruction, input, output in zip(instructions, inputs, outputs):
             # Must add eos_token, otherwise your generation will go on forever!
-            text = alpaca_prompt.format(input, output) + eos_token
+            text = alpaca_prompt.format(instruction, input, output) + eos_token
             texts.append(text)
            
-        return { "text" : texts, }
+        return {"text": texts}
 
-    dataset = dataset.map(format_prompts, batched = True,)
+    dataset = dataset.map(format_prompts, batched=True)
     # split the dataset into train and test, with a fix seed to ensure reproducibility
     dataset = dataset.train_test_split(test_size=0.1, seed=42)
     return dataset['train'], dataset['test']
@@ -110,76 +115,110 @@ def fine_tune(
         train_dataset: Dataset,
         test_dataset: Dataset,
         max_seq_length: int,
-
         ):
-
     """
     fine-tunes the model using supervised fine tuning.
     """
 
-    # 1. train with Hyperparameter Optimization
-
-    trainer=SFTTrainer(
+    trainer = SFTTrainer(
         model=model,
         tokenizer=tokenizer,
         train_dataset=train_dataset,
+        eval_dataset=test_dataset,
         dataset_text_field="text",
         max_seq_length=max_seq_length,
         dataset_num_proc=2,
-        packing=False, # Can make training 5x faster for shoert sequences.
+        packing=False,  # Can make training 5x faster for short sequences.
         args=TrainingArguments(
+            output_dir="outputs",
             per_device_train_batch_size=2,
             gradient_accumulation_steps=4,
             warmup_steps=5,
+            num_train_epochs=2,
             learning_rate=2e-4,
-            max_steps=60,
+            max_steps=120,
             fp16=not is_bfloat16_supported(),
             bf16=is_bfloat16_supported(),
             logging_steps=1,
             optim="adamw_8bit",
             weight_decay=0.01,
             lr_scheduler_type="linear",
-            seed = 3407,
-            output_dir="outputs",
-            report_to="comet_ml", # Use this for WandB etc
+            seed=3407,
+            report_to="comet_ml",  # Use this for WandB etc
+            eval_strategy="epoch",
+            eval_steps=None,
+            save_strategy="epoch",
         ),
     )
     # start training
     trainer.train()
 
-    trainer=SFTTrainer(
-        model=model,
-        tokenizer=tokenizer,
-        train_dataset=train_dataset,
-        dataset_text_field="text",
-        max_seq_length=max_seq_length,
-        dataset_num_proc=2,
-        packing=False, # Can make training 5x faster for shoert sequences.
-        args=TrainingArguments(
-            per_device_train_batch_size=2,
-            gradient_accumulation_steps=4,
-            warmup_steps=5,
-            learning_rate=2e-4,
-            max_steps=60,
-            fp16=not is_bfloat16_supported(),
-            bf16=is_bfloat16_supported(),
-            logging_steps=1,
-            optim="adamw_8bit",
-            weight_decay=0.01,
-            lr_scheduler_type="linear",
-            seed = 3407,
-            output_dir="outputs",
-            report_to="comet_ml", # Use this for WandB etc
-        ),
+
+def sanity_check_model(model: FastLanguageModel, tokenizer: AutoTokenizer):
+    """Just checking if the trained model is working on a simple example"""
+    # Define the prompt template
+    alpaca_prompt = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
+
+    ### Instruction:
+    {}
+
+    ### Input:
+    {}
+
+    ### Response:
+    {}
+    """
+    
+    instruction = "Extract the sentiment and key entities from this news"
+    input_example = "Goldman Sachs considers doubling exposure on BTC and ETH, Remains skeptical about XRP"
+
+    FastLanguageModel.for_inference(model)  # Enable native 2x faster inference
+    inputs = tokenizer(
+        [
+            alpaca_prompt.format(
+                instruction,  # example instruction
+                input_example,  # input
+                ""  # output - leave this blank for generation
+            )
+        ],
+        return_tensors="pt",
+    ).to("cuda")
+
+    outputs = model.generate(**inputs, max_new_tokens=128, use_cache=True)
+    output = tokenizer.batch_decode(outputs)
+    logger.info('Inference: {}', output)
+
+
+def export_model_to_ollama_format(
+    model: FastLanguageModel,
+    tokenizer: AutoTokenizer,
+    quantization_method: Optional[Literal["q4_k_m", "f16"]] = "q4_k_m",
+    output_dir: str = "outputs/model",
+    ): 
+    """
+    Saves the model and the tokenizer to disk locally
+
+    Args:
+        model: The fine-tuned model
+        tokenizer: The tokenizer
+        quantization_method: Method to use for quantization
+        output_dir: Directory to save the model
+    """
+    logger.info("Saving model to disk")
+    # Save in regular format instead of GGUF since cmake is not installed
+    model.save_pretrained(output_dir)
+    tokenizer.save_pretrained(output_dir)
+    logger.info(f"Model and tokenizer saved to {output_dir}")
+
 
 def run(
         base_llm_name: str,
         dataset_path: str,
         comet_ml_project_name: str,
         max_seq_length: Optional[int] = 2048,
+        max_steps: Optional[int] = -1,
         ):
     """
-    
     Fine-tunes a base LLM using supervised fine tuning.
     The training results are logged to CometML.
     The final artifact is saved as an Ollama model, so we can use it to generate signals
@@ -208,6 +247,12 @@ def run(
     # 4. Fine-tune the base LLM
     fine_tune(model, tokenizer, train_dataset, test_dataset, max_seq_length=max_seq_length)
 
+
+    # 5. Inference on a few examples - sanity check
+    sanity_check_model(model, tokenizer)
+
+    # 6. Save the model
+    export_model_to_ollama_format(model, tokenizer)
 
 if __name__ == '__main__':
     from fire import Fire
