@@ -49,17 +49,26 @@ setup-ollama:
 golden-dataset-with-claude:
 	uv run python golden-dataset.py \
 	 --model-provider anthropic \
-	 --n 1000 \
+	 --n 10000 \
 	 --output-file ./data/golden_dataset_anthropic.jsonl
 
 golden-dataset-with-ollama:
 	uv run python golden-dataset.py \
 	 --model-provider ollama \
-	 --n 1000 \
+	 --n 10000 \
 	 --output-file ./data/golden_dataset_ollama.jsonl
+
+venv-gpu-instance:
+	curl -LsSf https://astral.sh/uv/install.sh | sh && \
+	source $HOME/.local/bin/env && \
+	uv sync --group gpu-instance
+
+login-comet:
+	uv run comet login
 
 fine-tune:
 	uv run python fine_tuning.py \
-	 --base-llm-name unsloth/Llama-3.2-1B-bnb-4bit \
-	 --dataset-path ./data/golden_dataset_ollama.jsonl \
-	 --comet-ml-project-name news-signal-extractor
+		--base_llm_name unsloth/Llama-3.2-1B-bnb-4bit \
+		--dataset_path ./data/golden_dataset_ollama.jsonl \
+		--comet_ml_project_name news-signal-extractor \
+		--max_steps 10

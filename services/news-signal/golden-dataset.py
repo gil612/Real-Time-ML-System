@@ -1,8 +1,10 @@
 import json
 from typing import Literal
+import random
+import pandas as pd
 
 """
-Use Claude to generate a dataset of 1000 high quality samples.
+Use Claude to generate a dataset of 10000 high quality samples.
 """
 
 instruction = """
@@ -25,8 +27,9 @@ Do not output data for a given coin if the news is not relevant to it.
 
 
 def generate_dataset(
-    model_provider: Literal["anthropic", "ollama"],
+    model_provider: Literal['claude', 'ollama'],
     n: int,
+    input_file: str,
     output_file: str,
 ) -> None:
     """
@@ -35,12 +38,13 @@ def generate_dataset(
     Args:
         model_provider: the model provider to use
         n: the number of news to generate
+        input_file: the file to read the news from
         output_file: the file to write the dataset to
     """
     # load dataset
     import pandas as pd
 
-    df = pd.read_csv("data/cryptopanic_news.csv")
+    df = pd.read_csv(input_file)
     news = df["title"].tolist()
 
     # random sample n news
