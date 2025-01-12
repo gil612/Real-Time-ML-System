@@ -28,7 +28,7 @@ def main(
     Returns:
         None
     """
-    logger.info('Hello from technical-indicators!')
+    logger.info("Hello from technical-indicators!")
 
     app = Application(
         broker_address=kafka_broker_address,
@@ -38,18 +38,18 @@ def main(
     # Define the input and output topics of our streaming application
     input_topic = app.topic(
         name=kafka_input_topic,
-        value_deserializer='json',
+        value_deserializer="json",
     )
     output_topic = app.topic(
         name=kafka_output_topic,
-        value_serializer='json',
+        value_serializer="json",
     )
     # Create a Streaming DataFrame so we can start transforming data in real time
     sdf = app.dataframe(topic=input_topic)
 
     # We only keep the candles with the same window size as the candle_seconds
     # Thanks Carlo!
-    sdf = sdf[sdf['candle_seconds'] == candle_seconds]
+    sdf = sdf[sdf["candle_seconds"] == candle_seconds]
 
     # Update the list of candles in the state
     sdf = sdf.apply(update_candles, stateful=True)
@@ -57,7 +57,7 @@ def main(
     # Compute the technical indicators from the candles in the state
     sdf = sdf.apply(compute_indicators, stateful=True)
 
-    sdf = sdf.update(lambda value: logger.debug(f'Final message: {value}'))
+    sdf = sdf.update(lambda value: logger.debug(f"Final message: {value}"))
 
     # Send the final messages to the output topic
     sdf = sdf.to_topic(output_topic)
@@ -65,7 +65,7 @@ def main(
     app.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from config import config
 
     main(

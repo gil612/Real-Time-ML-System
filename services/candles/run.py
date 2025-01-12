@@ -17,7 +17,7 @@ def custom_ts_extractor(
     instead of Kafka timestamp.
     """
     # logger.debug(f'Custom timestamp extractor: {value}')
-    return value['timestamp_ms']
+    return value["timestamp_ms"]
 
 
 def init_candle(trade: dict) -> dict:
@@ -26,13 +26,13 @@ def init_candle(trade: dict) -> dict:
     """
     # breakpoint()
     return {
-        'open': trade['price'],
-        'high': trade['price'],
-        'low': trade['price'],
-        'close': trade['price'],
-        'volume': trade['volume'],
-        'timestamp_ms': trade['timestamp_ms'],
-        'pair': trade['pair'],
+        "open": trade["price"],
+        "high": trade["price"],
+        "low": trade["price"],
+        "close": trade["price"],
+        "volume": trade["volume"],
+        "timestamp_ms": trade["timestamp_ms"],
+        "pair": trade["pair"],
     }
 
 
@@ -41,12 +41,12 @@ def update_candle(candle: dict, trade: dict) -> dict:
     Update the candle with the latest trade
     """
     # breakpoint()
-    candle['close'] = trade['price']
-    candle['high'] = max(candle['high'], trade['price'])
-    candle['low'] = min(candle['low'], trade['price'])
-    candle['volume'] += trade['volume']
-    candle['timestamp_ms'] = trade['timestamp_ms']
-    candle['pair'] = trade['pair']
+    candle["close"] = trade["price"]
+    candle["high"] = max(candle["high"], trade["price"])
+    candle["low"] = min(candle["low"], trade["price"])
+    candle["volume"] += trade["volume"]
+    candle["timestamp_ms"] = trade["timestamp_ms"]
+    candle["pair"] = trade["pair"]
     return candle
 
 
@@ -74,7 +74,7 @@ def main(
     Returns:
         None
     """
-    logger.info('Starting the candles service!')
+    logger.info("Starting the candles service!")
 
     # Initialize the Quix Streams application
     app = Application(
@@ -85,12 +85,12 @@ def main(
     # Define the input and output topics
     input_topic = app.topic(
         name=kafka_input_topic,
-        value_deserializer='json',
+        value_deserializer="json",
         timestamp_extractor=custom_ts_extractor,
     )
     output_topic = app.topic(
         name=kafka_output_topic,
-        value_serializer='json',
+        value_serializer="json",
     )
 
     # Create a Streaming DataFrame from the input topic
@@ -112,37 +112,37 @@ def main(
         sdf = sdf.final()
 
     # Extract open, high, low, close, volume, timestamp_ms, pair from the dataframe
-    sdf['open'] = sdf['value']['open']
-    sdf['high'] = sdf['value']['high']
-    sdf['low'] = sdf['value']['low']
-    sdf['close'] = sdf['value']['close']
-    sdf['volume'] = sdf['value']['volume']
-    sdf['timestamp_ms'] = sdf['value']['timestamp_ms']
-    sdf['pair'] = sdf['value']['pair']
+    sdf["open"] = sdf["value"]["open"]
+    sdf["high"] = sdf["value"]["high"]
+    sdf["low"] = sdf["value"]["low"]
+    sdf["close"] = sdf["value"]["close"]
+    sdf["volume"] = sdf["value"]["volume"]
+    sdf["timestamp_ms"] = sdf["value"]["timestamp_ms"]
+    sdf["pair"] = sdf["value"]["pair"]
 
     # Extract window start and end timestamps
-    sdf['window_start_ms'] = sdf['start']
-    sdf['window_end_ms'] = sdf['end']
+    sdf["window_start_ms"] = sdf["start"]
+    sdf["window_end_ms"] = sdf["end"]
 
     # keep only the relevant columns
     sdf = sdf[
         [
-            'pair',
-            'timestamp_ms',
-            'open',
-            'high',
-            'low',
-            'close',
-            'volume',
-            'window_start_ms',
-            'window_end_ms',
+            "pair",
+            "timestamp_ms",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "window_start_ms",
+            "window_end_ms",
         ]
     ]
 
-    sdf['candle_seconds'] = candle_seconds
+    sdf["candle_seconds"] = candle_seconds
 
     # sdf = sdf.print()
-    sdf = sdf.update(lambda value: logger.info(f'Candle: {value}'))
+    sdf = sdf.update(lambda value: logger.info(f"Candle: {value}"))
     # sdf = sdf.update(lambda value: breakpoint())
 
     # push the candle to the output topic
@@ -152,7 +152,7 @@ def main(
     app.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from config import config
 
     main(

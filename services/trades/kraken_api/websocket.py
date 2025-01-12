@@ -9,7 +9,7 @@ from .trade import Trade
 
 
 class KrakenWebsocketAPI(TradesAPI):
-    URL = 'wss://ws.kraken.com/v2'
+    URL = "wss://ws.kraken.com/v2"
 
     def __init__(self, pairs: List[str]):
         self.pairs = pairs
@@ -30,29 +30,29 @@ class KrakenWebsocketAPI(TradesAPI):
         # receive the data from the websocket
         data = self._ws_client.recv()
 
-        if 'heartbeat' in data:
-            logger.info('Heartbeat received')
+        if "heartbeat" in data:
+            logger.info("Heartbeat received")
             return []
 
         # transform raw string into a JSON object
         try:
             data = json.loads(data)
         except json.JSONDecodeError as e:
-            logger.error(f'Error decoding JSON: {e}')
+            logger.error(f"Error decoding JSON: {e}")
             return []
 
         try:
-            trades_data = data['data']
+            trades_data = data["data"]
         except KeyError as e:
-            logger.error(f'No `data` field with trades in the message {e}')
+            logger.error(f"No `data` field with trades in the message {e}")
             return []
 
         trades = [
             Trade.from_kraken_websocket_api_response(
-                pair=trade['symbol'],
-                price=trade['price'],
-                volume=trade['qty'],
-                timestamp=trade['timestamp'],
+                pair=trade["symbol"],
+                price=trade["price"],
+                volume=trade["qty"],
+                timestamp=trade["timestamp"],
             )
             for trade in trades_data
         ]
@@ -70,11 +70,11 @@ class KrakenWebsocketAPI(TradesAPI):
         self._ws_client.send(
             json.dumps(
                 {
-                    'method': 'subscribe',
-                    'params': {
-                        'channel': 'trade',
-                        'symbol': self.pairs,
-                        'snapshot': False,
+                    "method": "subscribe",
+                    "params": {
+                        "channel": "trade",
+                        "symbol": self.pairs,
+                        "snapshot": False,
                     },
                 }
             )
@@ -97,5 +97,5 @@ def datestr2milliseconds(iso_time: str) -> int:
     """
     from datetime import datetime
 
-    dt = datetime.strptime(iso_time, '%Y-%m-%dT%H:%M:%S.%fZ')
+    dt = datetime.strptime(iso_time, "%Y-%m-%dT%H:%M:%S.%fZ")
     return int(dt.timestamp() * 1000)

@@ -48,12 +48,12 @@ class HopsworksFeatureStoreSink(BatchingSink):
         # set the materialization interval
         try:
             self._feature_group.materialization_job.schedule(
-                cron_expression=f'0 0/{self.materialization_interval_minutes} * ? * * *',
+                cron_expression=f"0 0/{self.materialization_interval_minutes} * ? * * *",
                 start_time=datetime.now(tz=timezone.utc),
             )
         # TODO: handle the FeatureStoreException
         except Exception as e:
-            logger.error(f'Failed to schedule materialization job: {e}')
+            logger.error(f"Failed to schedule materialization job: {e}")
 
         # call constructor of the base class to make sure the batches are initialized
         super().__init__()

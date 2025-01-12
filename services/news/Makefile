@@ -1,6 +1,10 @@
 run-dev:
 	uv run python run.py
 
+run-dev-historical:
+	copy historical.settings.env settings.env
+	uv run python run.py
+
 build:
 	docker build -f Dockerfile -t news .
 

@@ -27,7 +27,7 @@ Do not output data for a given coin if the news is not relevant to it.
 
 
 def generate_dataset(
-    model_provider: Literal['claude', 'ollama'],
+    model_provider: Literal["claude", "ollama"],
     n: int,
     input_file: str,
     output_file: str,
@@ -42,13 +42,11 @@ def generate_dataset(
         output_file: the file to write the dataset to
     """
     # load dataset
-    import pandas as pd
 
     df = pd.read_csv(input_file)
     news = df["title"].tolist()
 
     # random sample n news
-    import random
 
     news = random.sample(news, n)
 

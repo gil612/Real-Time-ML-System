@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file='settings.env')
+    model_config = SettingsConfigDict(env_file="settings.env")
 
     kafka_broker_address: str
     kafka_input_topic: str
@@ -14,11 +14,11 @@ class Settings(BaseSettings):
     feature_group_event_time: str
 
     feature_group_materialization_interval_minutes: int = 60  # Add default value
-    data_source: str = 'default_source'  # Add default value
+    data_source: str = "default_source"  # Add default value
 
 
 class HopsworksCredentials(BaseSettings):
-    model_config = SettingsConfigDict(env_file='hopsworks_credentials.env')
+    model_config = SettingsConfigDict(env_file="hopsworks_credentials.env")
     hopsworks_api_key: str
     hopsworks_project_name: str
 

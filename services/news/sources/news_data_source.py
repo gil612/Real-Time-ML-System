@@ -1,8 +1,9 @@
 from time import sleep
 from typing import Optional
 
-from news_downloader import NewsDownloader
 from quixstreams.sources.base import StatefulSource
+
+from .news_downloader import NewsDownloader
 
 
 class NewsDataSource(StatefulSource):
@@ -11,12 +12,12 @@ class NewsDataSource(StatefulSource):
         news_downloader: NewsDownloader,
         polling_interval_sec: Optional[int] = 10,
     ):
-        super().__init__(name='news_data_source')
+        super().__init__(name="news_data_source")
         self.news_downloader = news_downloader
         self.polling_interval_sec = polling_interval_sec
 
     def run(self):
-        last_published_at = self.state.get('last_published_at', None)
+        last_published_at = self.state.get("last_published_at", None)
 
         while self.running:
             # download news
@@ -35,7 +36,7 @@ class NewsDataSource(StatefulSource):
             for news_item in news:
                 # serialize the news item as bytes
                 message = self.serialize(
-                    key='news',
+                    key="news",
                     value=news_item.to_dict(),
                 )
                 # push the serialized news item to the topic
@@ -49,7 +50,7 @@ class NewsDataSource(StatefulSource):
                 last_published_at = news[-1].published_at
 
             # update the state
-            self.state.set('last_published_at', last_published_at)
+            self.state.set("last_published_at", last_published_at)
 
             # flush the state
             self.flush()

@@ -5,7 +5,7 @@ from .claude import ClaudeNewsSignalExtractor
 from .ollama import OllamaNewsSignalExtractor
 
 
-def get_llm(model_provider: Literal['anthropic', 'ollama']) -> BaseNewsSignalExtractor:
+def get_llm(model_provider: Literal["anthropic", "ollama"]) -> BaseNewsSignalExtractor:
     """
     Returns the LLM we want for the news signal extractor
 
@@ -15,7 +15,7 @@ def get_llm(model_provider: Literal['anthropic', 'ollama']) -> BaseNewsSignalExt
     Returns:
         The LLM we want for the news signal extractor
     """
-    if model_provider == 'anthropic':
+    if model_provider == "anthropic":
         from .config import AnthropicConfig
 
         config = AnthropicConfig()
@@ -25,7 +25,7 @@ def get_llm(model_provider: Literal['anthropic', 'ollama']) -> BaseNewsSignalExt
             api_key=config.api_key,
         )
 
-    elif model_provider == 'ollama':
+    elif model_provider == "ollama":
         from .config import OllamaConfig
 
         config = OllamaConfig()
@@ -35,4 +35,4 @@ def get_llm(model_provider: Literal['anthropic', 'ollama']) -> BaseNewsSignalExt
         )
 
     else:
-        raise ValueError(f'Unsupported model provider: {model_provider}')
+        raise ValueError(f"Unsupported model provider: {model_provider}")

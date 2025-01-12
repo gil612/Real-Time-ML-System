@@ -26,7 +26,7 @@ def update_candles(
         None
     """
     # Get the list of candles from our state
-    candles = state.get('candles', default=[])
+    candles = state.get("candles", default=[])
 
     if not candles:
         # If the state is empty, we just append the latest candle to the list
@@ -49,7 +49,7 @@ def update_candles(
     logger.debug(f'Number of candles in state for {candle["pair"]}: {len(candles)}')
 
     # Update the state with the new list of candles
-    state.set('candles', candles)
+    state.set("candles", candles)
 
     return candle
 
@@ -65,7 +65,7 @@ def same_window(candle_1: dict, candle_2: dict) -> bool:
         True if the candles are in the same window, False otherwise
     """
     return (
-        candle_1['window_start_ms'] == candle_2['window_start_ms']
-        and candle_1['window_end_ms'] == candle_2['window_end_ms']
-        and candle_1['pair'] == candle_2['pair']
+        candle_1["window_start_ms"] == candle_2["window_start_ms"]
+        and candle_1["window_end_ms"] == candle_2["window_end_ms"]
+        and candle_1["pair"] == candle_2["pair"]
     )

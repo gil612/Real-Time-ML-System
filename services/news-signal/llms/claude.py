@@ -47,7 +47,7 @@ class ClaudeNewsSignalExtractor(BaseNewsSignalExtractor):
     def get_signal(
         self,
         text: str,
-        output_format: Literal['dict', 'NewsSignal'] = 'NewsSignal',
+        output_format: Literal["dict", "NewsSignal"] = "NewsSignal",
     ) -> NewsSignal | dict:
         response: NewsSignal = self.llm.structured_predict(
             NewsSignal,
@@ -62,13 +62,13 @@ class ClaudeNewsSignalExtractor(BaseNewsSignalExtractor):
             if news_signal.signal != 0
         ]
 
-        if output_format == 'dict':
+        if output_format == "dict":
             return response.to_dict()
         else:
             return response
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from .config import AnthropicConfig
 
     config = AnthropicConfig()
@@ -79,13 +79,13 @@ if __name__ == '__main__':
     )
 
     examples = [
-        'Bitcoin ETF ads spotted on China’s Alipay payment app',
-        'U.S. Supreme Court Lets Nvidia’s Crypto Lawsuit Move Forward',
-        'Trump’s World Liberty Acquires ETH, LINK, and AAVE in $12M Crypto Shopping Spree',
+        "Bitcoin ETF ads spotted on China’s Alipay payment app",
+        "U.S. Supreme Court Lets Nvidia’s Crypto Lawsuit Move Forward",
+        "Trump’s World Liberty Acquires ETH, LINK, and AAVE in $12M Crypto Shopping Spree",
     ]
 
     for example in examples:
-        print(f'Example: {example}')
+        print(f"Example: {example}")
         response = llm.get_signal(example)
         print(response)
 

@@ -10,7 +10,7 @@ def main(
     kafka_input_topic: str,
     kafka_consumer_group: str,
     output_sink: HopsworksFeatureStoreSink,
-    data_source: Literal['live', 'historical', 'test'],
+    data_source: Literal["live", "historical", "test"],
 ):
     """
     2 things:
@@ -26,14 +26,14 @@ def main(
     Returns:
         None
     """
-    logger.info('Hello from to-feature-store!')
+    logger.info("Hello from to-feature-store!")
 
     app = Application(
         broker_address=kafka_broker_address,
         consumer_group=kafka_consumer_group,
-        auto_offset_reset='latest' if data_source == 'live' else 'earliest',
+        auto_offset_reset="latest" if data_source == "live" else "earliest",
     )
-    input_topic = app.topic(kafka_input_topic, value_deserializer='json')
+    input_topic = app.topic(kafka_input_topic, value_deserializer="json")
 
     sdf = app.dataframe(input_topic)
 
@@ -49,7 +49,7 @@ def main(
     app.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from config import config, hopsworks_credentials
 
     # Sink to save data to the feature store

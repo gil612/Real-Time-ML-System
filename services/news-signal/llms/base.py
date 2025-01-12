@@ -6,22 +6,22 @@ from pydantic import BaseModel, Field
 
 class NewsSignalOneCoin(BaseModel):
     coin: Literal[
-        'BTC',
-        'ETH',
-        'SOL',
-        'XRP',
-        'DOGE',
-        'ADA',
-        'XLM',
-        'LTC',
-        'BCH',
-        'DOT',
-        'XMR',
-        'EOS',
-        'XEM',
-        'ZEC',
-        'ETC',
-    ] = Field(description='The coin that the news is about')
+        "BTC",
+        "ETH",
+        "SOL",
+        "XRP",
+        "DOGE",
+        "ADA",
+        "XLM",
+        "LTC",
+        "BCH",
+        "DOT",
+        "XMR",
+        "EOS",
+        "XEM",
+        "ZEC",
+        "ETC",
+    ] = Field(description="The coin that the news is about")
     signal: Literal[1, 0, -1] = Field(
         description="""
     The signal of the news on the coin price.
@@ -39,7 +39,7 @@ class NewsSignal(BaseModel):
         """Convert NewsSignal to a dictionary format"""
         result = {}
         for signal in self.news_signals:
-            result[f'{signal.coin.lower()}_signal'] = signal.signal
+            result[f"{signal.coin.lower()}_signal"] = signal.signal
         return result
 
 
@@ -49,7 +49,7 @@ class BaseNewsSignalExtractor(ABC):
 
     @abstractmethod
     def get_signal(
-        self, text: str, output_format: Literal['dict', 'NewsSignal'] = 'dict'
+        self, text: str, output_format: Literal["dict", "NewsSignal"] = "dict"
     ) -> dict | NewsSignal:
         pass
 

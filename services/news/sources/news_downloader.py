@@ -21,9 +21,9 @@ class News(BaseModel):
     def to_dict(self) -> dict:
         return {
             **self.model_dump(),
-            'timestamp_ms': int(
+            "timestamp_ms": int(
                 datetime.fromisoformat(
-                    self.published_at.replace('Z', '+00:00')
+                    self.published_at.replace("Z", "+00:00")
                 ).timestamp()
                 * 1000
             ),
@@ -35,7 +35,7 @@ class NewsDownloader:
     This class is used to download news from the Cryptopanic API.
     """
 
-    URL = 'https://cryptopanic.com/api/free/v1/posts/'
+    URL = "https://cryptopanic.com/api/free/v1/posts/"
 
     def __init__(
         self,
@@ -50,18 +50,18 @@ class NewsDownloader:
         Keeps on calling _get_batch_of_news until it gets an empty list.
         """
         news = []
-        url = self.URL + '?auth_token=' + self.cryptopanic_api_key
+        url = self.URL + "?auth_token=" + self.cryptopanic_api_key
 
         while True:
             # logger.debug(f"Fetching news from {url}")
             batch_of_news, next_url = self._get_batch_of_news(url)
             news += batch_of_news
-            logger.debug(f'Fetched {len(batch_of_news)} news items')
+            logger.debug(f"Fetched {len(batch_of_news)} news items")
 
             if not batch_of_news:
                 break
             if not next_url:
-                logger.debug('No next URL found, breaking')
+                logger.debug("No next URL found, breaking")
                 break
 
             url = next_url
@@ -86,32 +86,32 @@ class NewsDownloader:
         try:
             response = response.json()
         except Exception as e:
-            logger.error(f'Error parsing response: {e}')
+            logger.error(f"Error parsing response: {e}")
             from time import sleep
 
             sleep(1)
-            return ([], '')
+            return ([], "")
 
         # parse the API response into a list of News objects
         news = [
             News(
-                title=post['title'],
-                published_at=post['published_at'],
-                source=post['domain'],
+                title=post["title"],
+                published_at=post["published_at"],
+                source=post["domain"],
             )
-            for post in response['results']
+            for post in response["results"]
         ]
 
         # extract the next URL from the API response
-        next_url = response['next']
+        next_url = response["next"]
 
         return news, next_url
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from config import cryptopanic_config
 
     news_downloader = NewsDownloader(cryptopanic_api_key=cryptopanic_config.api_key)
     news = news_downloader.get_news()
-    logger.debug(f'Fetched {len(news)} news items')
+    logger.debug(f"Fetched {len(news)} news items")
     breakpoint()
