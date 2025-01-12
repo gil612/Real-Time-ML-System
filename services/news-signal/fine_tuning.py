@@ -115,6 +115,7 @@ def fine_tune(
         train_dataset: Dataset,
         test_dataset: Dataset,
         max_seq_length: int,
+        max_steps: int,
         ):
     """
     fine-tunes the model using supervised fine tuning.
@@ -136,7 +137,7 @@ def fine_tune(
             warmup_steps=5,
             num_train_epochs=2,
             learning_rate=2e-4,
-            max_steps=120,
+            max_steps=max_steps,
             fp16=not is_bfloat16_supported(),
             bf16=is_bfloat16_supported(),
             logging_steps=1,
@@ -155,6 +156,7 @@ def fine_tune(
 
 
 def sanity_check_model(model: FastLanguageModel, tokenizer: AutoTokenizer):
+    logger.info("Sanity checking the model"),
     """Just checking if the trained model is working on a simple example"""
     # Define the prompt template
     alpaca_prompt = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
@@ -192,7 +194,7 @@ def sanity_check_model(model: FastLanguageModel, tokenizer: AutoTokenizer):
 def export_model_to_ollama_format(
     model: FastLanguageModel,
     tokenizer: AutoTokenizer,
-    quantization_method: Optional[Literal["q4_k_m", "f16"]] = "q4_k_m",
+    quantization_method: Optional[Literal["q4_k_m", "f16", "q8_0"]] = "q8_0",
     output_dir: str = "outputs/model",
     ): 
     """
@@ -217,6 +219,7 @@ def run(
         comet_ml_project_name: str,
         max_seq_length: Optional[int] = 2048,
         max_steps: Optional[int] = -1,
+        quantization_method: Optional[str] = "q8_0",
         ):
     """
     Fine-tunes a base LLM using supervised fine tuning.
@@ -245,14 +248,14 @@ def run(
     train_dataset, test_dataset = load_and_split_dataset(dataset_path, eos_token=tokenizer.eos_token)
 
     # 4. Fine-tune the base LLM
-    fine_tune(model, tokenizer, train_dataset, test_dataset, max_seq_length=max_seq_length)
+    fine_tune(model, tokenizer, train_dataset, test_dataset, max_seq_length=max_seq_length, max_steps=max_steps)
 
 
     # 5. Inference on a few examples - sanity check
     sanity_check_model(model, tokenizer)
 
     # 6. Save the model
-    export_model_to_ollama_format(model, tokenizer)
+    export_model_to_ollama_format(model, tokenizer, quantization_method="q8_0")
 
 if __name__ == '__main__':
     from fire import Fire

@@ -215,3 +215,4 @@ anthropic.env
 services/to-feature-store/hopsworks_credentials.env
 services/news/cryptopanic_credentials.env
 services/news-signal/anthropic_credentials.env
+services/news-signal/comet_credentials.env

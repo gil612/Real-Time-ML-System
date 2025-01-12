@@ -64,11 +64,14 @@ venv-gpu-instance:
 	uv sync --group gpu-instance
 
 login-comet:
+	export COMET_API_KEY=$$(grep COMET_API_KEY comet_credentials.env | cut -d '=' -f2) && \
 	uv run comet login
 
 fine-tune:
+	export COMET_API_KEY=$$(grep COMET_API_KEY comet_credentials.env | cut -d '=' -f2) && \
 	uv run python fine_tuning.py \
 		--base_llm_name unsloth/Llama-3.2-1B-bnb-4bit \
 		--dataset_path ./data/golden_dataset_ollama.jsonl \
 		--comet_ml_project_name news-signal-extractor \
+		--quantization_method q8_0 \
 		--max_steps 10

@@ -13,6 +13,8 @@ class Config(BaseSettings):
     kafka_topic: str
     polling_interval_sec: Optional[int] = 10
 
+    historical_data_source_url: str
+
 
 config = Config()
 
