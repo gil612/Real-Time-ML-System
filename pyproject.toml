@@ -7,3 +7,6 @@ name = "real_time_ml_system"
 version = "0.1.0"
 description = "Real Time ML System"
 requires-python = ">=3.10"
+
+[tool.uv.workspace]
+members = ["services/price-predictor"]

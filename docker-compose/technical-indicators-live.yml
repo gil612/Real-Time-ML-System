@@ -1,4 +1,4 @@
-version: '3.7'
+
 name: technical-indicators-pipeline
 networks:
   redpanda_network:
@@ -41,15 +41,15 @@ services:
       - KAFKA_BROKER_ADDRESS=redpanda:9092
     restart: always
 
-  to-feature-store:
-    build:
-      context: ../services/to-feature-store
-      dockerfile: Dockerfile
-    networks:
-      - redpanda_network
-    env_file:
-      - ../services/to-feature-store/settings.env
-      - ../services/to-feature-store/hopsworks_credentials.env
-    environment:
-      - KAFKA_BROKER_ADDRESS=redpanda:9092
-    restart: always
+  # to-feature-store:
+  #   build:
+  #     context: ../services/to-feature-store
+  #     dockerfile: Dockerfile
+  #   networks:
+  #     - redpanda_network
+  #   env_file:
+  #     - ../services/to-feature-store/settings.env
+  #     - ../services/to-feature-store/hopsworks_credentials.env
+  #   environment:
+  #     - KAFKA_BROKER_ADDRESS=redpanda:9092
+  #   restart: always

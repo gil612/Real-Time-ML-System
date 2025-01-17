@@ -1,14 +1,11 @@
 [project]
-name = "news"
+name = "price-predictor"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "hopsworks>=4.1.5",
     "loguru>=0.7.3",
-    "pandas>=2.2.3",
-    "pydantic-settings>=2.6.1",
-    "quixstreams>=3.4.0",
-    "rarfile>=4.2",
-    "requests>=2.32.3",
+    "pydantic-settings>=2.7.1",
 ]

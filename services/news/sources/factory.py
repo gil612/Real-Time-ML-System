@@ -1,7 +1,9 @@
 from typing import Literal, Optional, Union
+from loguru import logger
 
-from .historical_data_source import HistoricalNewsDataSource, get_historical_data_source
+from .historical_data_source import HistoricalNewsDataSource
 from .news_data_source import NewsDataSource as LiveNewsDataSource
+from config import config
 
 NewsDataSource = Union[LiveNewsDataSource, HistoricalNewsDataSource]
 
@@ -28,11 +30,18 @@ def get_source(
         return news_source
 
     elif data_source == "historical":
-        # We read the news from a CSV file, that we previously need to download from
-        # an external URL
-        # https://github.com/soheilrahsaz/cryptoNewsDataset/raw/refs/heads/main/CryptoNewsDataset_csvOutput.rar
-        # uncompress and wrap it as Quix Streams CSVSource
-        return get_historical_data_source()
+        # Debug log BEFORE creating source
+        logger.info("Creating historical source with:")
+        logger.info(f"URL RAR file: {config.historical_data_source_url_rar_file!r}")
+        logger.info(f"Days back: {config.historical_days_back!r}")
+        logger.info(f"All config: {config.model_dump()}")
+
+        source = HistoricalNewsDataSource(
+            url_rar_file=config.historical_data_source_url_rar_file,
+            days_back=config.historical_days_back,
+        )
+        logger.info("Source created successfully")
+        return source
 
     else:
         raise ValueError(f"Invalid data source: {data_source}")

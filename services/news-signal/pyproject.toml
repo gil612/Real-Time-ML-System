@@ -7,7 +7,6 @@ requires-python = ">=3.10"
 dependencies = [
     "llama-index-core>=0.12.5",
     "llama-index-llms-anthropic>=0.5.0",
-    "pydantic>=2.10.3",
     "pydantic-settings>=2.6.1",
     "quixstreams>=3.4.0",
     "loguru>=0.7.3",
@@ -16,7 +15,8 @@ dependencies = [
     "scikit-learn>=1.6.1",
     "comet>=3.1.0",
     "comet-ml>=3.47.6",
-    "unsloth>=2025.1.5",
+    "pandas>=2.2.1",
+    "pydantic>=2.10.5",
 ]
 
 [dependency-groups]

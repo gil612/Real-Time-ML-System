@@ -1,11 +1,8 @@
 import json
-from typing import Literal
 import random
-import pandas as pd
+from typing import Literal
 
-"""
-Use Claude to generate a dataset of 10000 high quality samples.
-"""
+import pandas as pd
 
 instruction = """
 You are an expert crypto financial analyst with deep knowledge of market dynamics and sentiment analysis.
@@ -31,25 +28,29 @@ def generate_dataset(
     n: int,
     input_file: str,
     output_file: str,
-) -> None:
+):
     """
-    generate a golden dataset with tuples to do Supervised Fine Tuning.
+    Generate a dataset of (instruction, input, output) tuples to do
+    Supervised Fine Tuning.
 
     Args:
-        model_provider: the model provider to use
-        n: the number of news to generate
-        input_file: the file to read the news from
-        output_file: the file to write the dataset to
-    """
-    # load dataset
+        model_provider: The model provider to use.
+        n: The number of news stories to generate.
+        input_file: The file to read the news stories from.
+        output_file: The file to write the dataset to.
 
+    Returns:
+        None
+    """
+
+    # load dataset
     df = pd.read_csv(input_file)
     news = df["title"].tolist()
 
-    # random sample n news
-
+    # random sample of n news
     news = random.sample(news, n)
 
+    # llm
     from llms.factory import get_llm
 
     llm = get_llm(model_provider=model_provider)
@@ -58,22 +59,20 @@ def generate_dataset(
 
     for news_item in tqdm(news):
         try:
-            signals = llm.get_signal(news_item, output_format="NewsSignal")
-
+            signals = llm.get_signal(news_item)
             output = {
                 "instruction": instruction,
                 "input": news_item,
-                "output": json.dumps(signals.model_dump()),
+                "output": signals.model_dump_json(),
                 "teacher_model_name": llm.model_name,
             }
-
-            # breakpoint()
 
             # append to file
             with open(output_file, "a") as f:
                 f.write(json.dumps(output) + "\n")
+
         except Exception as e:
-            print(f"Error processing news item: {e}")
+            print(f"Error: {e}")
             continue
 
 

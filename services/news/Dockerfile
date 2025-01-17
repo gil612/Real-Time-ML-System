@@ -2,7 +2,7 @@
 
 # First, build the application in the `/app` directory.
 # See `Dockerfile` for details.
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm AS builder
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 WORKDIR /app
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -15,10 +15,17 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 
 # Then, use a final image without uv
-FROM python:3.12-bookworm
+FROM python:3.12-slim-bookworm
 # It is important to use the image that matches the builder, as the path to the
 # Python executable must be the same, e.g., using `python:3.11-slim-bookworm`
 # will fail.
+
+# Install unrar from non-free repository
+RUN echo "deb http://deb.debian.org/debian bookworm non-free" >> /etc/apt/sources.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+    unrar \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 

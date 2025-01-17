@@ -1,33 +1,9 @@
-from datetime import datetime
 from typing import List, Tuple
 
 import requests
 from loguru import logger
-from pydantic import BaseModel
 
-
-class News(BaseModel):
-    """
-    This is the data model for the news.
-    """
-
-    title: str
-    published_at: str
-    source: str
-
-    # Challenge: You can also keep the URL and scrape it to get even more context
-    # about this piece of news.
-
-    def to_dict(self) -> dict:
-        return {
-            **self.model_dump(),
-            "timestamp_ms": int(
-                datetime.fromisoformat(
-                    self.published_at.replace("Z", "+00:00")
-                ).timestamp()
-                * 1000
-            ),
-        }
+from .news import News
 
 
 class NewsDownloader:

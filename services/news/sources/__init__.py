@@ -1,2 +1,4 @@
-from .factory import NewsDataSource as NewsDataSource
-from .factory import get_source as get_source
+from .factory import NewsDataSource
+from .factory import get_source
+
+__all__ = ["NewsDataSource", "get_source"]
