@@ -55,6 +55,10 @@ build-news-signal-historical:
 backfill-news-signals:
 	powershell -Command "$$env:RUN_ID='backfill-' + (Get-Random); docker compose -f news-signal-historical.yml up -d"
 
+backfill-news-signals-dummy:
+	docker compose -f news-signal-historical.yml build to-feature-store
+	powershell -Command "$$env:RUN_ID='backfill-' + (Get-Random); docker compose -f news-signal-historical.yml up -d"
+
 
 ########################################
 ## Clean up

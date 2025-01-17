@@ -60,20 +60,28 @@ class HopsworksFeatureStoreSink(BatchingSink):
 
     def write(self, batch: SinkBatch):
         # Transform the batch into a pandas DataFrame
-        data = [item.value for item in batch]
+        data = []
+        for item in batch:
+            # Each item.value might be a list of records
+            if isinstance(item.value, list):
+                data.extend(item.value)
+            else:
+                data.append(item.value)
+
         data = pd.DataFrame(data)
 
-        self._feature_group.insert(data)
+        # Add debug logging to see the columns
+        logger.debug(f"DataFrame columns: {data.columns}")
+        logger.debug(
+            f"First row: {data.iloc[0] if not data.empty else 'Empty DataFrame'}"
+        )
 
+        # Remove duplicate insert
         try:
-            # Try to write data to the db
             self._feature_group.insert(data)
-        except Exception as err:  # Capture the original exception
-            # In case of timeout, tell the app to wait for 30s
-            # and retry the writing later
-
+        except Exception as err:
             raise SinkBackpressureError(
                 retry_after=30.0,
                 topic=batch.topic,
                 partition=batch.partition,
-            ) from err  # Chain the exception
+            ) from err

@@ -15,7 +15,6 @@ services:
       - KAFKA_TOPIC=news_historical_${RUN_ID}
       - DATA_SOURCE=historical
       - HISTORICAL_DATA_SOURCE_URL_RAR_FILE=https://github.com/soheilrahsaz/cryptoNewsDataset/raw/refs/heads/main/CryptoNewsDataset_csvOutput.rar
-      - HISTORICAL_DAYS_BACK=180
       - POLLING_INTERVAL_SEC=10
     volumes:
       - ../services/news/data:/app/data
@@ -45,15 +44,14 @@ services:
     networks:
       - redpanda_network
     env_file:
-      - ../services/to-feature-store/live.settings.news-signal.env
       - ../services/to-feature-store/hopsworks_credentials.env
     environment:
       - KAFKA_BROKER_ADDRESS=redpanda:9092
       - KAFKA_INPUT_TOPIC=news_signal_historical_${RUN_ID}
       - KAFKA_CONSUMER_GROUP=to_feature_store_news_signal_historical_${RUN_ID}
       - FEATURE_GROUP_NAME=news_signals
-      - FEATURE_GROUP_VERSION=1
-      - FEATURE_GROUP_PRIMARY_KEYS=["coin", "model_name"]
+      - FEATURE_GROUP_VERSION=2
+      - FEATURE_GROUP_PRIMARY_KEYS=["coin"]
       - FEATURE_GROUP_EVENT_TIME=timestamp_ms
       - DATA_SOURCE=historical
     restart: always

@@ -10,7 +10,7 @@ def main(
     kafka_input_topic: str,
     kafka_consumer_group: str,
     output_sink: HopsworksFeatureStoreSink,
-    data_source: Literal["live", "historical", "test"],
+    data_source: Literal["live", "historical", "dummy"],
 ):
     """
     2 things:
@@ -37,14 +37,33 @@ def main(
 
     sdf = app.dataframe(input_topic)
 
-    # Do some processing here ...
-    # We need to extract the features we want to push to the feature store
-    # TODO: Implement
-    # Sink data to a CSV file
-    # sdf.sink(csv_sink)
+    # Extract and transform features from the input dataframe
+    def process_signals(row_dict):
+        logger.debug(f"Processing row: {row_dict}")
+        # Convert the row to a list of dictionaries, one for each signal
+        result = []
+        for signal in row_dict["signals"]:
+            result.append(
+                {
+                    "news": row_dict["news"],
+                    "model_name": row_dict["model_name"],
+                    "timestamp_ms": row_dict["timestamp_ms"],
+                    "coin": signal["coin"],
+                    "signal": signal["signal"],
+                }
+            )
+        logger.debug(f"Processed {len(result)} records")
+        return result
+
+    logger.info("Starting to process stream...")
+
+    # Process the stream
+    processed_df = sdf.apply(process_signals)
+
+    logger.info("Sending data to feature store...")
 
     # Sink data to the feature store
-    sdf.sink(output_sink)
+    processed_df.sink(output_sink)
 
     app.run()
 
