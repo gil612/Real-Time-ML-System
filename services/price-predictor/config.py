@@ -45,3 +45,18 @@ class HopsworksCredentials(BaseSettings):
 
 
 hopsworks_credentials = HopsworksCredentials()
+
+
+class CometCredentials(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file="comet_credentials.env",
+        extra="allow",
+        env_prefix="",  # Don't use any prefix for env vars
+    )
+
+    # Keep field names matching how they're used in the code
+    api_key: str = Field(alias="comet_api_key")
+    project_name: str = Field(alias="comet_project_name")
+
+
+comet_credentials = CometCredentials()

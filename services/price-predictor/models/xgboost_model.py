@@ -8,7 +8,16 @@ class XGBoostModel:
     """
 
     def __init__(self):
-        self.model = XGBRegressor()
+        self.model = XGBRegressor(
+            objective="reg:absoluteerror",
+            eval_metric="mae",
+        )
+
+    def get_model_object(self):
+        """
+        Returns the model object.
+        """
+        return self.model
 
     def fit(
         self,
