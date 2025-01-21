@@ -38,6 +38,7 @@ class FeatureReader:
         news_signals_feature_group_version: Optional[int] = None,
     ):
         """ """
+
         self.pair_to_predict = pair_to_predict
         self.candle_seconds = candle_seconds
         self.pairs_as_features = pairs_as_features
@@ -255,20 +256,28 @@ class FeatureReader:
             else:
                 df_all = df
 
-            if add_target_column:
-                logger.info("Adding target column to the dataset")
-                df_target = df_all[["window_end_ms", "close"]]
-                df_target["window_end_ms"] = (
-                    df_target["window_end_ms"] - self.prediction_seconds * 1000
-                )
-                df_all = df_all.merge(
-                    df_target,
-                    on="window_end_ms",
-                    how="left",
-                    suffixes=("", "_target"),
-                )
-                df_all = df_all[df_all["close_target"].notna()]
-                df_all.rename(columns={"close_target": "target"}, inplace=True)
+        # Add target column after all pairs are merged
+        if add_target_column:
+            logger.info("Adding target column to the dataset")
+            # Get close price for BTC/USD (first pair) for target
+            df_target = df_all[
+                ["window_end_ms", "close"]
+            ].copy()  # Use copy to avoid SettingWithCopyWarning
+            df_target["window_end_ms"] = (
+                df_target["window_end_ms"] - self.prediction_seconds * 1000
+            )
+            df_all = df_all.merge(
+                df_target,
+                on="window_end_ms",
+                how="left",
+                suffixes=("", "_target"),
+            )
+            df_all = df_all[df_all["close_target"].notna()]
+            df_all.rename(columns={"close_target": "target"}, inplace=True)
+
+        # rename the window_end_ms column to timestamp_ms and sort by it
+        df_all.rename(columns={"window_end_ms": "timestamp_ms"}, inplace=True)
+        df_all.sort_values(by="timestamp_ms", inplace=True)
 
         return df_all
 

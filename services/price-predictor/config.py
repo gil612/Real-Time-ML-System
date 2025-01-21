@@ -18,11 +18,11 @@ class TrainingConfig(BaseSettings):
     technical_indicators_as_features: list[str] = Field(
         description="The technical indicators to use for from the technical_indicators feature group"
     )
-    days_back: int = Field(
-        description="The number of days to consider for the historical data"
-    )
     llm_model_name_news_signals: str = Field(
         description="The name of the LLM model to use for the news signals"
+    )
+    days_back: int = Field(
+        description="The number of days to consider for the historical data"
     )
 
 
