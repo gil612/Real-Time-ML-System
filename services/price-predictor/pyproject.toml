@@ -10,4 +10,5 @@ dependencies = [
     "pyarrow>=19.0.0",
     "pydantic-settings>=2.7.1",
     "scikit-learn>=1.6.1",
+    "xgboost>=2.1.3",
 ]

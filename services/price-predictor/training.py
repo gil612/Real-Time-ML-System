@@ -2,7 +2,8 @@ from sklearn.metrics import mean_absolute_error
 from feature_reader import FeatureReader
 from loguru import logger
 import pandas as pd
-from dummy import DummyModel
+from models.dummy_model import DummyModel
+from models.xgboost_model import XGBoostModel
 
 
 def train_test_split(
@@ -32,6 +33,7 @@ def train(
     prediction_seconds: int,
     llm_model_name_news_signals: str,
     days_back: int,
+    hyperparameters_tuning: bool,
 ):
     """
     Does the following:
@@ -68,8 +70,8 @@ def train(
     train_df, test_df = train_test_split(features_and_targets, test_size=0.2)
 
     # 3. Split into features and targets
-    # X_train = train_df.drop(columns=["target"])
-    # y_train = train_df["target"]
+    X_train = train_df.drop(columns=["target"])
+    y_train = train_df["target"]
     X_test = test_df.drop(columns=["target"])
     y_test = test_df["target"]
 
@@ -94,7 +96,13 @@ def train(
         mae_sma14 = mean_absolute_error(y_test, y_pred_sma14)
         logger.info(f"MAE of dummy model based on sma_14: {mae_sma14}")
 
-    # 5. Save the model to the model registry
+    # Fit an ML modelon the training set
+    model = XGBoostModel()
+    model.fit(X_train, y_train, hyperparameters_tuning=hyperparameters_tuning)
+
+    y_test_pred = model.predict(X_test)
+    mae_xgboost = mean_absolute_error(y_test, y_test_pred)
+    logger.info(f"MAE of XGBoost model: {mae_xgboost}")
 
 
 if __name__ == "__main__":
@@ -112,4 +120,5 @@ if __name__ == "__main__":
         prediction_seconds=training_config.prediction_seconds,
         llm_model_name_news_signals=training_config.llm_model_name_news_signals,
         days_back=training_config.days_back,
+        hyperparameters_tuning=training_config.hyperparameters_tuning,
     )

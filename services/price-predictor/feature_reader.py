@@ -279,6 +279,13 @@ class FeatureReader:
         df_all.rename(columns={"window_end_ms": "timestamp_ms"}, inplace=True)
         df_all.sort_values(by="timestamp_ms", inplace=True)
 
+        # drop the pair_{pair} columns
+        # These are categorical columns that are not needed right now
+        df_all.drop(
+            columns=[col for col in df_all.columns if col.startswith("pair")],
+            inplace=True,
+        )
+
         return df_all
 
     def get_inference_data(self):
