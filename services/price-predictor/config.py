@@ -24,8 +24,14 @@ class TrainingConfig(BaseSettings):
     days_back: int = Field(
         description="The number of days to consider for the historical data"
     )
-    hyperparameters_tuning: bool = Field(
-        description="Whether to tune the hyperparameters of the model"
+    hyperparameter_tuning: bool = Field(
+        description="Whether to tune the hyperparameter of the model"
+    )
+    hyperparameter_tuning_search_trials: int = Field(
+        description="The number of trials to perform for hyperparameter tuning"
+    )
+    hyperparameter_tuning_n_splits: int = Field(
+        description="The number of splits to perform for hyperparameter tuning"
     )
 
 
