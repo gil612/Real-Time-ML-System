@@ -1,3 +1,4 @@
+from typing import Literal
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -32,6 +33,11 @@ class TrainingConfig(BaseSettings):
     )
     hyperparameter_tuning_n_splits: int = Field(
         description="The number of splits to perform for hyperparameter tuning"
+    )
+    # model registry
+    model_status: Literal["Development", "Staging", "Production"] = Field(
+        default="Development",
+        description="A string describing the status of the model version",
     )
 
 

@@ -8,6 +8,17 @@ from models.xgboost_model import XGBoostModel
 from sklearn.metrics import mean_absolute_error
 
 
+def get_model_name(
+    pair_to_predict: str,
+    candle_seconds: int,
+    prediction_seconds: int,
+) -> str:
+    """
+    Returns the name of the model to save to the model registry
+    """
+    return f"price_predictor_pair_{pair_to_predict.replace('/', '_')}_candle_seconds_{candle_seconds}_prediction_seconds_{prediction_seconds}"
+
+
 def train_test_split(
     data: pd.DataFrame,
     test_size: float = 0.2,
@@ -43,6 +54,7 @@ def train(
     comet_project_name: str,
     hyperparameter_tuning_search_trials: int,
     hyperparameter_tuning_n_splits: int,
+    model_status: str,
 ):
     """
     Does the following:
@@ -82,6 +94,7 @@ def train(
             "hyperparameter_tuning": hyperparameter_tuning,
             "hyperparameter_tuning_search_trials": hyperparameter_tuning_search_trials,
             "hyperparameter_tuning_n_splits": hyperparameter_tuning_n_splits,
+            "model_status": model_status,
         }
     )
 
@@ -176,16 +189,32 @@ def train(
     logger.info(f"MAE of XGBoost model on training set: {mae_xgboost_model_train}")
     experiment.log_metric("mae_train", mae_xgboost_model_train)
 
+    model_name = get_model_name(
+        pair_to_predict=pair_to_predict,
+        candle_seconds=candle_seconds,
+        prediction_seconds=prediction_seconds,
+    )
+
     # 6. Save the model artifact to the experiment
     # Save the model to local filepath
-    model_filepath = "xgboost_model.joblib"
+    model_filepath = f"{model_name}.joblib"
     joblib.dump(model.get_model_object(), model_filepath)
 
     # Log the model to Comet
     experiment.log_model(
-        name="xgboost_model",
+        name=model_name,
         file_or_folder=model_filepath,
     )
+
+    # Register the model in the experiment
+    if True:
+        logger.info(f"Registering model {model_name} with status {model_status}")
+        registered_model = experiment.register_model(
+            model_name=model_name,
+            status=model_status,
+        )
+        logger.info(f"Registered model {registered_model}")
+    logger.info("Training job done!")
 
 
 if __name__ == "__main__":
@@ -208,4 +237,5 @@ if __name__ == "__main__":
         comet_project_name=comet_credentials.project_name,
         hyperparameter_tuning_search_trials=training_config.hyperparameter_tuning_search_trials,
         hyperparameter_tuning_n_splits=training_config.hyperparameter_tuning_n_splits,
+        model_status=training_config.model_status,
     )
